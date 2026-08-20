@@ -1,0 +1,117 @@
+server:
+  port: 9000
+
+spring:
+  application:
+    name: yorimichi
+
+  datasource:
+#    driver-class-name: oracle.jdbc.OracleDriver
+#    url: jdbc:oracle:thin:@localhost:1521:xe
+    username: reservation
+    password: reservation
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/reservation_db?serverTimezone=UTC&useUniCode=yes&characterEncoding=UTF-8
+#    username: mysite
+#    password: mysite
+#    url: jdbc:postgresql://localhost:5432/postgres
+#    username: postgres
+#    password: manager
+#    driver-class-name: org.postgresql.Driver
+
+  jpa:
+#    database-platform: org.hibernate.dialect.OracleDialect
+    database-platform: org.hibernate.dialect.MySQLDialect
+#    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+
+  session:
+    jdbc:
+      initialize-schema: always
+
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+    multipart:
+      enabled: true
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: lukdown10@gmail.com
+    password: bzcd biul dxga ggxm
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+jwt:
+  secret: ${JWT_SECRET:change-this-to-a-long-random-secret-key-at-least-32-bytes}
+  access-token-validity: 3600000       # 1시간
+  refresh-token-validity: 1209600000   # 14일
+
+mybatis:
+  type-aliases-package: com.yorimichi.yorimichi.domain
+  mapper-locations: classpath:mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+
+file:
+  upload:
+    windows: C:\Users\hi02\dev\upload\
+    linux: /app/upload/
+
+# Python 서버 설정
+python:
+  server:
+    url: http://localhost:8000
+
+coolsms:
+  apiKey: NCSLQL4H6PYPSGVY
+  apiSecret: 0CVQK714L5TESTEVZSYTREGG7YMOTQE9
+  senderNumber: 01050940355
+
+# 카카오 로그인 설정
+kakao:
+  client:
+    id: 037b4750462926ddfa5052315f6e6872
+    secret: jIiBSJS9KOA4FMLlmReAwt0TBY7bxTDH
+  redirect:
+    uri: http://localhost:5173/oauth/kakao/callback
+
+# 네이버 로그인 설정
+naver:
+  client:
+    id: GNL1ZsPzNKSBVTKrzrn3
+    secret: wGh76bNhDa
+  redirect:
+    uri: http://localhost:5173/oauth/naver/callback
+
+# 구글 로그인 설정
+google:
+  client:
+    id: 1035458597855-agjemb473p5h7o4kvodl4lkjv5jhi9cf.apps.googleusercontent.com
+    secret: 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
+  redirect:
+    uri: http://localhost:5173/oauth/google/callback
+
+
+#logging:
+#  level:
+#    com.learningman.nagnae.authorization.repository.UserRepository: TRACE
+#    com.learningman.nagnae.board.repository.BoardMapper: TRACE
+#    com.learningman.nagnae.chatbot.repository.ChatHistoryRepository: TRACE
+#    com.learningman.nagnae.study.repository.StudyMapper: TRACE

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yorimichi.yorimichi.domain.user.repository.UserMapper">
+
+    <resultMap id="userResultMap" type="com.yorimichi.yorimichi.domain.user.entity.User">
+        <id property="id" column="id"/>
+        <result property="email" column="email"/>
+        <result property="password" column="password"/>
+        <result property="nickname" column="nickname"/>
+        <result property="phone" column="phone"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+
+
+
+    <insert id="save" parameterType="com.yorimichi.yorimichi.domain.user.entity.User"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO users (email, password, nickname, phone, created_at)
+        VALUES (#{email}, #{password}, #{nickname}, #{phone}, SYSDATE)
+    </insert>
+
+    <select id="findById" resultMap="userResultMap">
+        SELECT id, email, password, nickname, phone, created_at
+        FROM users
+        WHERE id = #{id}
+    </select>
+
+    <select id="findByEmail" resultMap="userResultMap">
+        SELECT id, email, password, nickname, phone, created_at
+        FROM users
+        WHERE email = #{email}
+    </select>
+
+    <select id="existsByEmail" resultType="boolean">
+        SELECT COUNT(*) > 0
+        FROM users
+        WHERE email = #{email}
+    </select>
+
+</mapper>
