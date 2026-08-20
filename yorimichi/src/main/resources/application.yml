@@ -8,10 +8,10 @@ spring:
   datasource:
 #    driver-class-name: oracle.jdbc.OracleDriver
 #    url: jdbc:oracle:thin:@localhost:1521:xe
-    username: reservation
-    password: reservation
+    username: yorimichi
+    password: yorimichi
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/reservation_db?serverTimezone=UTC&useUniCode=yes&characterEncoding=UTF-8
+    url: jdbc:mysql://localhost:3306/yorimichi_db?serverTimezone=UTC&useUniCode=yes&characterEncoding=UTF-8
 #    username: mysite
 #    password: mysite
 #    url: jdbc:postgresql://localhost:5432/postgres
