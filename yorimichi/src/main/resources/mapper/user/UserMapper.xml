@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yorimichi.yorimichi.domain.user.repository.UserMapper">
+
+    <resultMap id="userResultMap" type="com.yorimichi.yorimichi.domain.user.entity.User">
+        <id     property="memberId"            column="member_id"/>
+        <result property="email"               column="email"/>
+        <result property="password"            column="password"/>
+        <result property="name"                column="name"/>
+        <result property="phone"               column="phone"/>
+        <result property="personalCustomsCode" column="personal_customs_code"/>
+        <result property="role"                column="role"/>
+        <result property="status"              column="status"/>
+        <result property="withdrawnAt"         column="withdrawn_at"/>
+        <result property="createdAt"           column="created_at"/>
+        <result property="updatedAt"           column="updated_at"/>
+    </resultMap>
+
+    <sql id="memberColumns">
+        member_id, email, password, name, phone,
+        personal_customs_code, role, status,
+        withdrawn_at, created_at, updated_at
+    </sql>
+
+
+    <!-- 회원가입 -->
+    <insert id="save" parameterType="com.yorimichi.yorimichi.domain.user.entity.User"
+            useGeneratedKeys="true" keyProperty="memberId">
+        INSERT INTO MEMBER (email, password, name, phone, role, status)
+        VALUES (#{email}, #{password}, #{name}, #{phone},
+                IFNULL(#{role}, 'USER'), IFNULL(#{status}, 'ACTIVE'))
+    </insert>
+
+
+    <!-- ID로 조회 -->
+    <select id="findById" resultMap="userResultMap">
+        SELECT <include refid="memberColumns"/>
+        FROM MEMBER
+        WHERE member_id = #{memberId}
+    </select>
+
+
+    <!-- 이메일로 조회 (로그인에 사용) -->
+    <select id="findByEmail" resultMap="userResultMap">
+        SELECT <include refid="memberColumns"/>
+        FROM MEMBER
+        WHERE email = #{email}
+    </select>
+
+
+    <!-- 이메일 중복 확인 -->
+    <select id="existsByEmail" resultType="boolean">
+        SELECT COUNT(*) > 0
+        FROM MEMBER
+        WHERE email = #{email}
+    </select>
+
+</mapper>

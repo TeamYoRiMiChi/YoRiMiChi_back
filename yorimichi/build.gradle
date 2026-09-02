@@ -13,6 +13,13 @@ java {
 	}
 }
 
+// 컴파일된 클래스에 매개변수 이름을 남깁니다.
+// 이게 없으면 @RequestParam / @PathVariable이 이름을 못 찾아 에러가 납니다.
+tasks.withType(JavaCompile).configureEach {
+	options.compilerArgs << '-parameters'
+	options.encoding = 'UTF-8'
+}
+
 repositories {
 	mavenCentral()
 }
