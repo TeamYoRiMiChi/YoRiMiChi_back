@@ -1,6 +1,7 @@
 package com.yorimichi.yorimichi.global.config;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -31,6 +32,14 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    /**
+     * 허용할 프론트 주소 패턴 (application.yml의 cors.allowed-origins)
+     *
+     * 설정이 없어도 서버가 뜼도록 기본값을 두었습니다.
+     */
+    @Value("${cors.allowed-origins:http://localhost:*,http://127.0.0.1:*,http://192.168.*.*:*,http://10.*.*.*:*}")
+    private List<String> allowedOrigins;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -96,13 +105,18 @@ public class SecurityConfig {
         response.getWriter().write(body);
     }
 
+    /**
+     * CORS 설정
+     *
+     * allowCredentials(true)를 쓰면 setAllowedOrigins에 "*"를 넣을 수 없습니다.
+     * 대신 setAllowedOriginPatterns를 쓰면 와일드카드를 쓸 수 있어서,
+     * 사설 IP(192.168.x.x 등)로 접속해도 허용됩니다.
+     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(
-                "http://localhost:5173",
-                "http://localhost:4173"   // vite preview
-        ));
+
+        configuration.setAllowedOriginPatterns(allowedOrigins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization"));

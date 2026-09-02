@@ -63,6 +63,27 @@ jwt:
   access-token-validity: 3600000       # 1시간
   refresh-token-validity: 1209600000   # 14일
 
+# ============================================
+# CORS 허용 주소
+#
+# allowCredentials(true)를 쓰므로 "*" 대신 패턴을 씁니다.
+# 사설 IP를 열어둠으로 같은 와이파이의 휴대폰·PC에서도 접속됩니다.
+# 실제 배포 시에는 사설 IP 패턴을 빼고 실제 도메인만 남기세요.
+# ============================================
+cors:
+  allowed-origins:
+    - http://localhost:*
+    - http://127.0.0.1:*
+    - http://192.168.*.*:*
+    - http://172.16.*.*:*
+    - http://172.17.*.*:*
+    - http://172.18.*.*:*
+    - http://172.19.*.*:*
+    - http://172.2*.*.*:*
+    - http://172.30.*.*:*
+    - http://172.31.*.*:*
+    - http://10.*.*.*:*
+
 mybatis:
   type-aliases-package: com.yorimichi.yorimichi.domain
   mapper-locations: classpath:mapper/**/*.xml
