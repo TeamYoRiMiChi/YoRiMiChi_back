@@ -91,26 +91,21 @@ python:
   server:
     url: http://localhost:8000
 
-coolsms:
-  apiKey: NCSLQL4H6PYPSGVY
-  apiSecret: 0CVQK714L5TESTEVZSYTREGG7YMOTQE9
-  senderNumber: 01050940355
-
 # 카카오 로그인 설정
-kakao:
-  client:
-    id: 037b4750462926ddfa5052315f6e6872
-    secret: jIiBSJS9KOA4FMLlmReAwt0TBY7bxTDH
-  redirect:
-    uri: http://localhost:5173/oauth/kakao/callback
+#kakao:
+#  client:
+#    id: 037b4750462926ddfa5052315f6e6872
+#    secret: jIiBSJS9KOA4FMLlmReAwt0TBY7bxTDH
+#  redirect:
+#    uri: http://localhost:5173/oauth/kakao/callback
 
 # 네이버 로그인 설정
-naver:
-  client:
-    id: GNL1ZsPzNKSBVTKrzrn3
-    secret: wGh76bNhDa
-  redirect:
-    uri: http://localhost:5173/oauth/naver/callback
+#naver:
+#  client:
+#    id: GNL1ZsPzNKSBVTKrzrn3
+#    secret: wGh76bNhDa
+#  redirect:
+#    uri: http://localhost:5173/oauth/naver/callback
 
 # 구글 로그인 설정
 google:

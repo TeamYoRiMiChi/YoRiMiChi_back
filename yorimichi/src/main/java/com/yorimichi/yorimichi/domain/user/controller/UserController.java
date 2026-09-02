@@ -38,7 +38,6 @@ public class UserController {
      */
     @PostMapping("/login")
     public ApiResponse<LoginResponseDto> login(@Valid @RequestBody LoginRequestDto request) {
-    	System.out.println(request);
         return ApiResponse.success(userService.login(request));
     }
 
