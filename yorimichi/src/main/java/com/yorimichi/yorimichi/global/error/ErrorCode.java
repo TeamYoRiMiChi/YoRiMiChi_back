@@ -22,7 +22,14 @@ public enum ErrorCode {
     LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "A001", "メールアドレスまたはパスワードが正しくありません。"),
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "A002", "無効なトークンです。"),
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "A003", "トークンの有効期限が切れています。"),
-    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "A004", "ログインが必要です。");
+    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "A004", "ログインが必要です。"),
+
+    // Product
+    PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "P001", "存在しない商品です。"),
+    OUT_OF_STOCK(HttpStatus.CONFLICT, "P002", "在庫が不足しています。"),
+
+    // Category
+    CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "G001", "存在しないカテゴリです。");
 
     private final HttpStatus status;
     private final String code;

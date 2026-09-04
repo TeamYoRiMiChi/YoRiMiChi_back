@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yorimichi.yorimichi.domain.product.repository.ProductMapper">
+
+    <resultMap id="productResultMap" type="com.yorimichi.yorimichi.domain.product.entity.Product">
+        <id     property="productId"        column="product_id"/>
+        <result property="categoryId"       column="category_id"/>
+        <result property="brand"            column="brand"/>
+        <result property="productName"      column="product_name"/>
+        <result property="productNameJp"    column="product_name_jp"/>
+        <result property="description"      column="description"/>
+        <result property="priceJpy"         column="price_jpy"/>
+        <result property="originalPriceJpy" column="original_price_jpy"/>
+        <result property="stock"            column="stock"/>
+        <result property="salesCount"       column="sales_count"/>
+        <result property="weight"           column="weight"/>
+        <result property="originalUrl"      column="original_url"/>
+        <result property="thumbnailUrl"     column="thumbnail_url"/>
+        <result property="status"           column="status"/>
+        <result property="createdAt"        column="created_at"/>
+        <result property="updatedAt"        column="updated_at"/>
+    </resultMap>
+
+
+    <sql id="productColumns">
+        product_id, category_id, brand, product_name, product_name_jp, description,
+        price_jpy, original_price_jpy, stock, sales_count, weight,
+        original_url, thumbnail_url, status, created_at, updated_at
+    </sql>
+
+
+    <!--
+      목록·개수 조회에 공통으로 쓰이는 조건절.
+      한 곳에만 두면 조건이 바뀔 때 한 번만 고치면 됩니다.
+    -->
+    <sql id="searchConditions">
+        <where>
+            status = 'ACTIVE'
+
+            <if test="categoryId != null">
+                AND category_id = #{categoryId}
+            </if>
+
+            <if test="keyword != null and keyword != ''">
+                AND (
+                    product_name    LIKE CONCAT('%', #{keyword}, '%')
+                 OR product_name_jp LIKE CONCAT('%', #{keyword}, '%')
+                 OR brand           LIKE CONCAT('%', #{keyword}, '%')
+                )
+            </if>
+        </where>
+    </sql>
+
+
+    <!-- 상품 목록 -->
+    <select id="findAll" resultMap="productResultMap">
+        SELECT <include refid="productColumns"/>
+        FROM PRODUCT
+        <include refid="searchConditions"/>
+
+        <choose>
+            <when test="sort == 'popular'">
+                ORDER BY sales_count DESC, product_id DESC
+            </when>
+            <when test="sort == 'newest'">
+                ORDER BY created_at DESC, product_id DESC
+            </when>
+            <otherwise>
+                <!-- recommend(기본): 판매량과 최신순을 적당히 섞은 순서 -->
+                ORDER BY product_id ASC
+            </otherwise>
+        </choose>
+
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+
+    <!-- 전체 개수 (페이지 수 계산용) -->
+    <select id="countAll" resultType="long">
+        SELECT COUNT(*)
+        FROM PRODUCT
+        <include refid="searchConditions"/>
+    </select>
+
+
+    <!-- 상품 단건 -->
+    <select id="findById" resultMap="productResultMap">
+        SELECT <include refid="productColumns"/>
+        FROM PRODUCT
+        WHERE product_id = #{productId}
+    </select>
+
+</mapper>
