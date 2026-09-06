@@ -12,6 +12,7 @@ import com.yorimichi.yorimichi.domain.mypage.entity.OrderItem;
 @Mapper
 public interface OrderHistoryMapper {
 
-	List<OrderHistory> findOrderHistoriesByMemberId(@Param("memberId") Long memberId);
+	List<OrderHistory> findOrderHistoriesByMemberId(@Param("memberId") Long memberId, @Param("offset") int offset, @Param("size") int size);
 	List<OrderItem> findItemsByOrderId(@Param("orderId") Long orderId);
+	long countOrderHistoriesByMemberId(@Param("memberId") Long member);
 }

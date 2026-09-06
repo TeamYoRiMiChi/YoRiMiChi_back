@@ -43,6 +43,7 @@
     	FROM ORDERS
     	WHERE member_id = #{memberId}
     	ORDER BY order_id DESC
+    	LIMIT #{size} OFFSET #{offset}
 	</select>
 
 
@@ -61,5 +62,11 @@
     	FROM order_item
     	WHERE order_id = #{orderId}
     	ORDER BY order_item_id ASC
+	</select>
+	
+	<select id="countOrderHistoriesByMemberId" resultType="long">
+    	SELECT COUNT(*)
+    	FROM orders
+    	WHERE member_id = #{memberId}
 	</select>
 </mapper>
