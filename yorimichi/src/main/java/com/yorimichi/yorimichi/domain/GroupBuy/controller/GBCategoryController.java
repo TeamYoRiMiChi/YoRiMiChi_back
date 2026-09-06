@@ -23,6 +23,6 @@ public class GBCategoryController {
     	System.out.println("GBCategoryController::::");
         return ApiResponse.success(
                 gbCategoryService.getCategories()
-        );
+        ); 
     }
 }
