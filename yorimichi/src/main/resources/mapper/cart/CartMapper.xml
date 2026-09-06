@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yorimichi.yorimichi.domain.cart.repository.CartMapper">
+
+    <!-- ============================================
+         CART
+    ============================================ -->
+    <resultMap id="cartResultMap" type="com.yorimichi.yorimichi.domain.cart.entity.Cart">
+        <id     property="cartId"    column="cart_id"/>
+        <result property="memberId"  column="member_id"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="findCartByMemberId" resultMap="cartResultMap">
+        SELECT cart_id, member_id, created_at, updated_at
+        FROM CART
+        WHERE member_id = #{memberId}
+    </select>
+
+    <insert id="createCart" parameterType="com.yorimichi.yorimichi.domain.cart.entity.Cart"
+            useGeneratedKeys="true" keyProperty="cartId">
+        INSERT INTO CART (member_id)
+        VALUES (#{memberId})
+    </insert>
+
+
+    <!-- ============================================
+         CART_ITEM
+         화면에 상품명·가격·이미지가 필요해서 PRODUCT를 조인합니다.
+    ============================================ -->
+    <resultMap id="cartItemResultMap" type="com.yorimichi.yorimichi.domain.cart.entity.CartItem">
+        <id     property="cartItemId"       column="cart_item_id"/>
+        <result property="cartId"           column="cart_id"/>
+        <result property="productId"        column="product_id"/>
+        <result property="quantity"         column="quantity"/>
+        <result property="createdAt"        column="created_at"/>
+        <result property="updatedAt"        column="updated_at"/>
+
+        <!-- PRODUCT 조인 값 -->
+        <result property="brand"            column="brand"/>
+        <result property="productName"      column="product_name"/>
+        <result property="priceJpy"         column="price_jpy"/>
+        <result property="originalPriceJpy" column="original_price_jpy"/>
+        <result property="thumbnailUrl"     column="thumbnail_url"/>
+        <result property="stock"            column="stock"/>
+        <result property="productStatus"    column="product_status"/>
+    </resultMap>
+
+    <sql id="cartItemJoin">
+        SELECT
+            ci.cart_item_id,
+            ci.cart_id,
+            ci.product_id,
+            ci.quantity,
+            ci.created_at,
+            ci.updated_at,
+            p.brand,
+            p.product_name,
+            p.price_jpy,
+            p.original_price_jpy,
+            p.thumbnail_url,
+            p.stock,
+            p.status AS product_status
+        FROM CART_ITEM ci
+        JOIN PRODUCT p ON p.product_id = ci.product_id
+    </sql>
+
+
+    <select id="findItemsByCartId" resultMap="cartItemResultMap">
+        <include refid="cartItemJoin"/>
+        WHERE ci.cart_id = #{cartId}
+        ORDER BY ci.created_at DESC, ci.cart_item_id DESC
+    </select>
+
+
+    <select id="findItem" resultMap="cartItemResultMap">
+        <include refid="cartItemJoin"/>
+        WHERE ci.cart_id = #{cartId}
+          AND ci.product_id = #{productId}
+    </select>
+
+
+    <!--
+      cartItemId로 조회하되, 그 장바구니가 정말 이 회원 것인지 함께 확인합니다.
+      확인 없이 삭제하면 다른 사람의 장바구니를 지울 수 있습니다.
+    -->
+    <select id="findItemByIdAndMember" resultMap="cartItemResultMap">
+        <include refid="cartItemJoin"/>
+        JOIN CART c ON c.cart_id = ci.cart_id
+        WHERE ci.cart_item_id = #{cartItemId}
+          AND c.member_id = #{memberId}
+    </select>
+
+
+    <insert id="insertItem" parameterType="com.yorimichi.yorimichi.domain.cart.entity.CartItem"
+            useGeneratedKeys="true" keyProperty="cartItemId">
+        INSERT INTO CART_ITEM (cart_id, product_id, quantity)
+        VALUES (#{cartId}, #{productId}, #{quantity})
+    </insert>
+
+
+    <update id="updateItemQuantity">
+        UPDATE CART_ITEM
+        SET quantity = #{quantity}
+        WHERE cart_item_id = #{cartItemId}
+    </update>
+
+
+    <delete id="deleteItem">
+        DELETE FROM CART_ITEM
+        WHERE cart_item_id = #{cartItemId}
+    </delete>
+
+
+    <delete id="deleteAllItems">
+        DELETE FROM CART_ITEM
+        WHERE cart_id = #{cartId}
+    </delete>
+
+</mapper>

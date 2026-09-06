@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+  namespace는 CategoryMapper 인터페이스의 전체 경로와 정확히 같아야 합니다.
+  MyBatis가 이 이름을 보고 자바 인터페이스와 SQL을 연결합니다.
+-->
+<mapper namespace="com.yorimichi.yorimichi.domain.GroupBuy.repository.GBCategoryMapper">
+
+    <!--
+      DB 컬럼(snake_case) → 자바 필드(camelCase) 매핑
+      application.yml의 map-underscore-to-camel-case로도 되지만,
+      명시해두면 어떤 컬럼이 어디로 가는지 한눈에 보입니다.
+    -->
+    <resultMap id="categoryResultMap" type="com.yorimichi.yorimichi.domain.GroupBuy.entity.GBCategory">
+        <id     property="categoryId"       column="category_id"/>
+        <result property="categoryName"     column="category_name"/>
+        <result property="parentCategoryId" column="parent_category_id"/>
+        <result property="createdAt"        column="created_at"/>
+        <result property="updatedAt"        column="updated_at"/>
+    </resultMap>
+
+
+    <!-- id는 인터페이스의 메서드명(findAll)과 같아야 합니다 -->
+    <select id="findAll" resultMap="categoryResultMap">
+        SELECT category_id, category_name, parent_category_id, created_at, updated_at
+        FROM CATEGORY
+        ORDER BY category_id
+    </select>
+
+</mapper>

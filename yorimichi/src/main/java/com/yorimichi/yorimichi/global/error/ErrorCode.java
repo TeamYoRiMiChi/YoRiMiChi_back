@@ -29,7 +29,10 @@ public enum ErrorCode {
     OUT_OF_STOCK(HttpStatus.CONFLICT, "P002", "在庫が不足しています。"),
 
     // Category
-    CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "G001", "存在しないカテゴリです。");
+    CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "G001", "存在しないカテゴリです。"),
+
+    // Cart
+    CART_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "T001", "カートに該当する商品がありません。");
 
     private final HttpStatus status;
     private final String code;
