@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 package com.yorimichi.yorimichi.domain.mypage.controller;
 
 import java.util.List;
@@ -28,4 +26,3 @@ public class WishlistController {
         return ApiResponse.success(wishlistService.getWishlist(memberId));
     }
 }
->>>>>>> branch 'master' of https://github.com/TeamYoRiMiChi/YoRiMiChi_back.git
