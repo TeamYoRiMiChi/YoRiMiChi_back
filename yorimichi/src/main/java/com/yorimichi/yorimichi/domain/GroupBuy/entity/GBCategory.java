@@ -10,7 +10,6 @@ import java.time.LocalDateTime;
 /**
  * 상품 카테고리 (CATEGORY 테이블)
  *
- * parentCategoryId가 NULL이면 최상위 카테고리입니다.
  */
 @Getter
 @Builder
