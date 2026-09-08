@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yorimichi.yorimichi.domain.order.repository.OrderMapper">
+
+    <!-- ============================================
+         주문서 준비
+    ============================================ -->
+
+    <resultMap id="addressResultMap"
+               type="com.yorimichi.yorimichi.domain.order.entity.OrderAddress">
+        <id     property="addressId"     column="address_id"/>
+        <result property="memberId"      column="member_id"/>
+        <result property="receiverName"  column="receiver_name"/>
+        <result property="receiverPhone" column="receiver_phone"/>
+        <result property="postalCode"    column="postal_code"/>
+        <result property="address"       column="address"/>
+        <result property="addressDetail" column="address_detail"/>
+        <result property="isDefault"     column="is_default"/>
+    </resultMap>
+
+    <!--
+      기본 배송지를 우선 찾되, 없으면 가장 최근에 등록한 주소를 씁니다.
+      ORDER BY is_default DESC 로 기본 배송지가 맨 앞에 옵니다.
+    -->
+    <select id="findDefaultAddress" resultMap="addressResultMap">
+        SELECT address_id, member_id, receiver_name, receiver_phone,
+               postal_code, address, address_detail, is_default
+        FROM ADDRESS
+        WHERE member_id = #{memberId}
+        ORDER BY is_default DESC, address_id DESC
+        LIMIT 1
+    </select>
+
+    <select id="findCustomsCode" resultType="string">
+        SELECT personal_customs_code
+        FROM MEMBER
+        WHERE member_id = #{memberId}
+    </select>
+
+    <!-- 배송지 단건 — 다른 사람의 주소를 쓰지 못하도록 member_id를 함께 확인합니다 -->
+    <select id="findAddressByIdAndMember" resultMap="addressResultMap">
+        SELECT address_id, member_id, receiver_name, receiver_phone,
+               postal_code, address, address_detail, is_default
+        FROM ADDRESS
+        WHERE address_id = #{addressId}
+          AND member_id = #{memberId}
+    </select>
+
+    <update id="updateCustomsCode">
+        UPDATE MEMBER
+        SET personal_customs_code = #{customsCode}
+        WHERE member_id = #{memberId}
+    </update>
+
+    <select id="findLatestExchangeRate" resultType="java.math.BigDecimal">
+        SELECT rate
+        FROM EXCHANGE_RATE
+        WHERE base_currency = 'JPY' AND target_currency = 'KRW'
+        ORDER BY applied_at DESC
+        LIMIT 1
+    </select>
+
+
+    <!-- ============================================
+         주문 생성
+    ============================================ -->
+
+    <insert id="insertOrder"
+            parameterType="com.yorimichi.yorimichi.domain.order.entity.Order"
+            useGeneratedKeys="true" keyProperty="orderId">
+        INSERT INTO ORDERS (
+            member_id, group_buy_id, order_number, order_type,
+            receiver_name, receiver_phone, postal_code, address, address_detail,
+            personal_customs_code, applied_exchange_rate,
+            product_amount, shipping_fee, customs_duty, total_amount,
+            order_status
+        ) VALUES (
+            #{memberId}, #{groupBuyId}, #{orderNumber}, #{orderType},
+            #{receiverName}, #{receiverPhone}, #{postalCode}, #{address}, #{addressDetail},
+            #{personalCustomsCode}, #{appliedExchangeRate},
+            #{productAmount}, #{shippingFee}, #{customsDuty}, #{totalAmount},
+            #{orderStatus}
+        )
+    </insert>
+
+
+    <insert id="insertOrderItem"
+            parameterType="com.yorimichi.yorimichi.domain.order.entity.OrderLine"
+            useGeneratedKeys="true" keyProperty="orderItemId">
+        INSERT INTO ORDER_ITEM (
+            order_id, product_id, product_name,
+            price_jpy, price_krw, quantity, item_total
+        ) VALUES (
+            #{orderId}, #{productId}, #{productName},
+            #{priceJpy}, #{priceKrw}, #{quantity}, #{itemTotal}
+        )
+    </insert>
+
+
+    <insert id="insertPayment">
+        INSERT INTO PAYMENT (order_id, payment_method, payment_status, amount)
+        VALUES (#{orderId}, #{paymentMethod}, 'PENDING', #{amount})
+    </insert>
+
+
+    <insert id="insertShipping">
+        INSERT INTO SHIPPING (order_id, shipping_status)
+        VALUES (#{orderId}, 'PREPARING')
+    </insert>
+
+
+    <!--
+      재고를 줄이면서 판매량을 늘립니다.
+      WHERE stock >= #{quantity} 조건이 중요합니다.
+      동시에 여러 사람이 주문해도 재고보다 많이 팔리지 않습니다.
+      (조건에 안 맞으면 0건이 수정되고, 서비스가 이를 감지해 예외를 던집니다)
+    -->
+    <update id="decreaseStock">
+        UPDATE PRODUCT
+        SET stock = stock - #{quantity},
+            sales_count = sales_count + #{quantity}
+        WHERE product_id = #{productId}
+          AND stock >= #{quantity}
+    </update>
+
+
+    <!-- ============================================
+         주문 조회
+    ============================================ -->
+
+    <resultMap id="orderResultMap" type="com.yorimichi.yorimichi.domain.order.entity.Order">
+        <id     property="orderId"             column="order_id"/>
+        <result property="memberId"            column="member_id"/>
+        <result property="groupBuyId"          column="group_buy_id"/>
+        <result property="orderNumber"         column="order_number"/>
+        <result property="orderType"           column="order_type"/>
+        <result property="receiverName"        column="receiver_name"/>
+        <result property="receiverPhone"       column="receiver_phone"/>
+        <result property="postalCode"          column="postal_code"/>
+        <result property="address"             column="address"/>
+        <result property="addressDetail"       column="address_detail"/>
+        <result property="personalCustomsCode" column="personal_customs_code"/>
+        <result property="appliedExchangeRate" column="applied_exchange_rate"/>
+        <result property="productAmount"       column="product_amount"/>
+        <result property="shippingFee"         column="shipping_fee"/>
+        <result property="customsDuty"         column="customs_duty"/>
+        <result property="totalAmount"         column="total_amount"/>
+        <result property="orderStatus"         column="order_status"/>
+        <result property="orderedAt"           column="ordered_at"/>
+    </resultMap>
+
+    <select id="findByIdAndMember" resultMap="orderResultMap">
+        SELECT *
+        FROM ORDERS
+        WHERE order_id = #{orderId}
+          AND member_id = #{memberId}
+    </select>
+
+
+    <resultMap id="orderLineResultMap"
+               type="com.yorimichi.yorimichi.domain.order.entity.OrderLine">
+        <id     property="orderItemId"  column="order_item_id"/>
+        <result property="orderId"      column="order_id"/>
+        <result property="productId"    column="product_id"/>
+        <result property="productName"  column="product_name"/>
+        <result property="priceJpy"     column="price_jpy"/>
+        <result property="priceKrw"     column="price_krw"/>
+        <result property="quantity"     column="quantity"/>
+        <result property="itemTotal"    column="item_total"/>
+        <result property="brand"        column="brand"/>
+        <result property="thumbnailUrl" column="thumbnail_url"/>
+    </resultMap>
+
+    <select id="findItemsByOrderId" resultMap="orderLineResultMap">
+        SELECT
+            oi.order_item_id,
+            oi.order_id,
+            oi.product_id,
+            oi.product_name,
+            oi.price_jpy,
+            oi.price_krw,
+            oi.quantity,
+            oi.item_total,
+            p.brand,
+            p.thumbnail_url
+        FROM ORDER_ITEM oi
+        LEFT JOIN PRODUCT p ON p.product_id = oi.product_id
+        WHERE oi.order_id = #{orderId}
+        ORDER BY oi.order_item_id
+    </select>
+
+
+    <select id="existsOrderNumber" resultType="boolean">
+        SELECT COUNT(*) > 0
+        FROM ORDERS
+        WHERE order_number = #{orderNumber}
+    </select>
+
+</mapper>

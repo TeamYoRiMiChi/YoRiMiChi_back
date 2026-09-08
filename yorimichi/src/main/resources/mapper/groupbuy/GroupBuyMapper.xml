@@ -5,4 +5,25 @@
 
 <mapper namespace="com.yorimichi.yorimichi.domain.GroupBuy.repository.GroupBuyMapper">
 
+    <!-- DB 컬럼과 화면에 보낼 DTO 항목을 연결 -->
+    <resultMap id="groupBuyDetailResultMap"
+               type="com.yorimichi.yorimichi.domain.GroupBuy.dto.GroupBuyResponseDto">
+        <id property="groupBuyId" column="group_buy_id"/>
+        <result property="productId" column="product_id"/>
+        <result property="title" column="title"/>
+        <result property="description" column="description"/>
+        <result property="targetQuantity" column="target_quantity"/>
+        <result property="currentQuantity" column="current_quantity"/>
+        <result property="startDate" column="start_date"/>
+        <result property="endDate" column="end_date"/>
+        <result property="status" column="status"/>
+    </resultMap>
+
+    <!-- 기존 설계의 GROUP_BUY만 조회합니다. 상품 정보는 다음 단계에서 연결 -->
+    <select id="findById" resultMap="groupBuyDetailResultMap">
+        SELECT group_buy_id, product_id, title, description,
+               target_quantity, current_quantity, start_date, end_date, status
+        FROM GROUP_BUY
+        WHERE group_buy_id = #{groupBuyId}
+    </select>
 </mapper>

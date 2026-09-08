@@ -8,8 +8,7 @@ import lombok.Getter;
 /**
  * 카테고리 응답
  *
- * 화면에 필요한 값만 담습니다.
- * createdAt 같은 관리용 컬럼은 프론트가 쓸 일이 없으니 빼두었습니다.
+ * 화면에 필요한 값만
  */
 @Getter
 public class GBCategoryResponseDto {
