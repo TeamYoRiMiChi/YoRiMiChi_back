@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yorimichi.yorimichi.domain.mypage.repository.OrderDetailMapper">
+	<resultMap id="orderDetailMap"
+           type="com.yorimichi.yorimichi.domain.mypage.entity.OrderDetail">
+
+    	<id property="orderId" column="order_id"/>
+
+    	<result property="orderNumber" column="order_number"/>
+    	<result property="orderType" column="order_type"/>
+    	<result property="totalAmount" column="total_amount"/>
+    	<result property="orderStatus" column="order_status"/>
+    	<result property="orderedAt" column="ordered_at"/>
+	</resultMap>
+	
+
+    <select id="findOrderDetailByMemberIdAndOrderId" resultMap="orderDetailMap">
+    	SELECT
+        	order_id,
+        	order_number,
+        	order_type,
+        	total_amount,
+        	order_status,
+        	ordered_at
+    	FROM ORDERS
+    	WHERE member_id = #{memberId}
+    	ORDER BY order_id DESC
+    	LIMIT #{size} OFFSET #{offset}
+	</select>
+</mapper>
