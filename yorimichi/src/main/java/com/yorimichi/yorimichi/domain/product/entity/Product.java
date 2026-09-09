@@ -11,16 +11,13 @@ import java.time.LocalDateTime;
 /**
  * 일본 상품 (PRODUCT 테이블)
  *
-<<<<<<< HEAD
  * - saleType         : OVERSEAS(해외직구), GROUP_BUY(공동구매 전용)
  * - originalPriceJpy : 정가. NULL이면 할인이 없는 상품
  * - salesCount       : 누적 판매량 (인기순 정렬에 사용)
  * - status           : ACTIVE, SOLD_OUT, HIDDEN
-=======
- * - originalPriceJpy: 정가. NULL이면 할인이 없는 상품
- * - salesCount: 누적 판매량 (인기순 정렬에 사용)
- * - status: ACTIVE, GROUP_BUY, SOLD_OUT, HIDDEN
->>>>>>> branch 'master' of https://github.com/TeamYoRiMiChi/YoRiMiChi_back.git
+ *
+ * 참고: 해외직구·공동구매 구분은 status가 아니라 saleType이 담당합니다.
+ * status는 "판매 가능한 상태인가"만 다룹니다.
  */
 @Getter
 @Builder
