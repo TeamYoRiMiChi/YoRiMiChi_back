@@ -66,6 +66,7 @@ public class SecurityConfig {
                 // 상품·카테고리 조회는 비로그인도 가능
                 .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/overseas/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/gb-categories/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/group-buys/**").permitAll()
 
