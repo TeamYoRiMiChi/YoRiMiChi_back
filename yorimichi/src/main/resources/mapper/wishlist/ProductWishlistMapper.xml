@@ -8,6 +8,7 @@
         <id     property="wishlistId"       column="wishlist_id"/>
         <result property="memberId"         column="member_id"/>
         <result property="productId"        column="product_id"/>
+        <result property="groupBuyId"       column="group_buy_id"/>
         <result property="createdAt"        column="created_at"/>
 
         <!-- PRODUCT 조인 값 -->
@@ -27,6 +28,13 @@
             w.wishlist_id,
             w.member_id,
             w.product_id,
+            (
+                SELECT gb.group_buy_id
+                FROM GROUP_BUY gb
+                WHERE gb.product_id = w.product_id
+                ORDER BY gb.group_buy_id DESC
+                LIMIT 1
+            ) AS group_buy_id,
             w.created_at,
             p.brand,
             p.product_name,

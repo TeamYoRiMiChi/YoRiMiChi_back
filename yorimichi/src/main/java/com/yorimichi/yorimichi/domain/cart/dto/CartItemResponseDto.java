@@ -12,6 +12,8 @@ public class CartItemResponseDto {
 
     private final Long cartItemId;
     private final Long productId;
+    private final String productStatus;
+    private final Long groupBuyId;
     private final String brand;
     private final String productName;
     private final BigDecimal priceJpy;
@@ -25,6 +27,8 @@ public class CartItemResponseDto {
     public CartItemResponseDto(CartItem item) {
         this.cartItemId = item.getCartItemId();
         this.productId = item.getProductId();
+        this.productStatus = item.getProductStatus();
+        this.groupBuyId = item.getGroupBuyId();
         this.brand = item.getBrand();
         this.productName = item.getProductName();
         this.priceJpy = item.getPriceJpy();
