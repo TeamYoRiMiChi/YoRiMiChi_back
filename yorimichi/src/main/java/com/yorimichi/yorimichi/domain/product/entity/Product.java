@@ -11,9 +11,10 @@ import java.time.LocalDateTime;
 /**
  * 일본 상품 (PRODUCT 테이블)
  *
- * - originalPriceJpy: 정가. NULL이면 할인이 없는 상품
- * - salesCount: 누적 판매량 (인기순 정렬에 사용)
- * - status: ACTIVE, SOLD_OUT, HIDDEN
+ * - saleType         : OVERSEAS(해외직구), GROUP_BUY(공동구매 전용)
+ * - originalPriceJpy : 정가. NULL이면 할인이 없는 상품
+ * - salesCount       : 누적 판매량 (인기순 정렬에 사용)
+ * - status           : ACTIVE, SOLD_OUT, HIDDEN
  */
 @Getter
 @Builder
@@ -21,8 +22,13 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class Product {
 
+    /** 판매 방식 값 */
+    public static final String SALE_TYPE_OVERSEAS = "OVERSEAS";
+    public static final String SALE_TYPE_GROUP_BUY = "GROUP_BUY";
+
     private Long productId;
     private Long categoryId;
+    private String saleType;
     private String brand;
     private String productName;
     private String productNameJp;
@@ -41,6 +47,16 @@ public class Product {
     /** 재고가 남아 있는지 */
     public boolean isInStock() {
         return stock != null && stock > 0;
+    }
+
+    /** 해외직구 상품인지 (바로 구매 가능) */
+    public boolean isOverseas() {
+        return SALE_TYPE_OVERSEAS.equals(saleType);
+    }
+
+    /** 공동구매 전용 상품인지 (모집을 통해서만 구매) */
+    public boolean isGroupBuyOnly() {
+        return SALE_TYPE_GROUP_BUY.equals(saleType);
     }
 
     /**

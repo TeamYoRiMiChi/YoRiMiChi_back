@@ -27,9 +27,12 @@ public class ProductService {
      * 페이지 번호와 크기를 서버에서 한 번 더 다듬습니다.
      * 프론트에서 잘못된 값(0페이지, 1000개 요청)이 와도
      * 서버가 무리한 조회를 하지 않도록 막는 역할입니다.
+     *
+     * @param saleType OVERSEAS | GROUP_BUY. null이면 구분 없이 전체
      */
     @Transactional(readOnly = true)
-    public PageResponse<ProductResponseDto> getProducts(Long categoryId,
+    public PageResponse<ProductResponseDto> getProducts(String saleType,
+                                                        Long categoryId,
                                                         String keyword,
                                                         String sort,
                                                         int page,
@@ -39,15 +42,17 @@ public class ProductService {
         int safeSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
         int offset = (safePage - 1) * safeSize;
 
+        String saleTypeFilter = blankToNull(saleType);
+
         // 카테고리 1(すべて)은 전체 조회이므로 조건에서 뺍니다
         Long categoryFilter = (categoryId == null || categoryId == 1L) ? null : categoryId;
 
-        String keywordFilter = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
+        String keywordFilter = blankToNull(keyword);
 
-        List<Product> products =
-                productMapper.findAll(categoryFilter, keywordFilter, sort, offset, safeSize);
+        List<Product> products = productMapper.findAll(
+                saleTypeFilter, categoryFilter, keywordFilter, sort, offset, safeSize);
 
-        long total = productMapper.countAll(categoryFilter, keywordFilter);
+        long total = productMapper.countAll(saleTypeFilter, categoryFilter, keywordFilter);
 
         List<ProductResponseDto> content = products.stream()
                 .map(ProductResponseDto::new)
@@ -63,5 +68,9 @@ public class ProductService {
                 .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
 
         return new ProductResponseDto(product);
+    }
+
+    private String blankToNull(String value) {
+        return (value == null || value.isBlank()) ? null : value.trim();
     }
 }
