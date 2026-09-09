@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
  *
  * - originalPriceJpy: 정가. NULL이면 할인이 없는 상품
  * - salesCount: 누적 판매량 (인기순 정렬에 사용)
- * - status: ACTIVE, SOLD_OUT, HIDDEN
+ * - status: ACTIVE, GROUP_BUY, SOLD_OUT, HIDDEN
  */
 @Getter
 @Builder

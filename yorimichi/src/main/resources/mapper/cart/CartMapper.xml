@@ -34,6 +34,7 @@
         <id     property="cartItemId"       column="cart_item_id"/>
         <result property="cartId"           column="cart_id"/>
         <result property="productId"        column="product_id"/>
+        <result property="groupBuyId"       column="group_buy_id"/>
         <result property="quantity"         column="quantity"/>
         <result property="createdAt"        column="created_at"/>
         <result property="updatedAt"        column="updated_at"/>
@@ -53,6 +54,13 @@
             ci.cart_item_id,
             ci.cart_id,
             ci.product_id,
+            (
+                SELECT gb.group_buy_id
+                FROM GROUP_BUY gb
+                WHERE gb.product_id = ci.product_id
+                ORDER BY gb.group_buy_id DESC
+                LIMIT 1
+            ) AS group_buy_id,
             ci.quantity,
             ci.created_at,
             ci.updated_at,
