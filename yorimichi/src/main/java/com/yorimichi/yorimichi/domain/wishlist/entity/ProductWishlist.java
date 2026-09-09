@@ -28,6 +28,7 @@ public class ProductWishlist {
     private Long wishlistId;
     private Long memberId;
     private Long productId;
+    private Long groupBuyId;
     private LocalDateTime createdAt;
 
     /* ===== PRODUCT 조인 값 ===== */
@@ -41,7 +42,7 @@ public class ProductWishlist {
 
     /** 지금도 구매할 수 있는 상품인지 */
     public boolean isAvailable() {
-        return "ACTIVE".equals(productStatus)
+        return ("ACTIVE".equals(productStatus) || "GROUP_BUY".equals(productStatus))
                 && stock != null
                 && stock > 0;
     }

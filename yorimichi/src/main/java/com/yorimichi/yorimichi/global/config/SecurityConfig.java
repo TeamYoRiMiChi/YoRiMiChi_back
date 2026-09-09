@@ -68,6 +68,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/gb-categories/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/group-buys/**").permitAll()
                 // 나머지는 로그인 필요
                 .anyRequest().authenticated()
             )

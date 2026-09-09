@@ -43,7 +43,8 @@ public class CartService {
         Product product = productMapper.findById(request.getProductId())
                 .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
 
-        if (!"ACTIVE".equals(product.getStatus())) {
+        if (!"ACTIVE".equals(product.getStatus())
+                && !"GROUP_BUY".equals(product.getStatus())) {
             throw new CustomException(ErrorCode.PRODUCT_NOT_FOUND);
         }
 

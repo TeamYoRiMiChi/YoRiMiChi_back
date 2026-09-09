@@ -16,6 +16,8 @@ public class WishlistItemResponseDto {
 
     private final Long wishlistId;
     private final Long productId;
+    private final Long groupBuyId;
+    private final String productStatus;
     private final String brand;
     private final String productName;
     private final BigDecimal priceJpy;
@@ -27,6 +29,8 @@ public class WishlistItemResponseDto {
     public WishlistItemResponseDto(ProductWishlist w) {
         this.wishlistId = w.getWishlistId();
         this.productId = w.getProductId();
+        this.groupBuyId = w.getGroupBuyId();
+        this.productStatus = w.getProductStatus();
         this.brand = w.getBrand();
         this.productName = w.getProductName();
         this.priceJpy = w.getPriceJpy();
