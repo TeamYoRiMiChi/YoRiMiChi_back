@@ -68,11 +68,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/gb-categories/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/group-buys/**").permitAll()
-<<<<<<< HEAD
-                
-               
-=======
->>>>>>> branch 'master' of https://github.com/TeamYoRiMiChi/YoRiMiChi_back.git
+
                 // 나머지는 로그인 필요
                 .anyRequest().authenticated()
             )
