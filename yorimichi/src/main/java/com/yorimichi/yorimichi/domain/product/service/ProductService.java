@@ -39,8 +39,10 @@ public class ProductService {
         int safeSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
         int offset = (safePage - 1) * safeSize;
 
-        // 카테고리 1(すべて)은 전체 조회이므로 조건에서 뺍니다
-        Long categoryFilter = (categoryId == null || categoryId == 1L) ? null : categoryId;
+     // categoryId가 없으면 전체 조회,
+     // 값이 있으면 해당 카테고리만 조회합니다.
+     // categoryId=1은 식품 카테고리입니다.
+        Long categoryFilter = categoryId;
 
         String keywordFilter = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
 
