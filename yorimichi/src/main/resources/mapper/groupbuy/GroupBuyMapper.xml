@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yorimichi.yorimichi.domain.GroupBuy.repository.GroupBuyMapper">
+
+    <!-- DB 컬럼과 화면에 보낼 DTO 항목을 연결 -->
+    <resultMap id="groupBuyDetailResultMap"
+               type="com.yorimichi.yorimichi.domain.GroupBuy.dto.GroupBuyResponseDto">
+        <id property="groupBuyId" column="group_buy_id"/>
+        <result property="productId" column="product_id"/>
+        <result property="productName" column="product_name"/>
+        <result property="productNameJp" column="product_name_jp"/>
+        <result property="brand" column="brand"/>
+        <result property="priceJpy" column="price_jpy"/>
+        <result property="originalPriceJpy" column="original_price_jpy"/>
+        <result property="thumbnailUrl" column="thumbnail_url"/>
+        <result property="title" column="title"/>
+        <result property="description" column="description"/>
+        <result property="targetQuantity" column="target_quantity"/>
+        <result property="currentQuantity" column="current_quantity"/>
+        <result property="startDate" column="start_date"/>
+        <result property="endDate" column="end_date"/>
+        <result property="status" column="status"/>
+    </resultMap>
+
+    <!-- 공동구매와 연결된 상품 정보를 한 번에 조회합니다. -->
+    <select id="findById" resultMap="groupBuyDetailResultMap">
+        SELECT gb.group_buy_id, gb.product_id,
+               p.product_name, p.product_name_jp, p.brand,
+               p.price_jpy, p.original_price_jpy, p.thumbnail_url,
+               gb.title, gb.description, gb.target_quantity,
+               gb.current_quantity, gb.start_date, gb.end_date, gb.status
+        FROM GROUP_BUY gb
+        JOIN PRODUCT p ON p.product_id = gb.product_id
+        WHERE gb.group_buy_id = #{groupBuyId}
+    </select>
+</mapper>

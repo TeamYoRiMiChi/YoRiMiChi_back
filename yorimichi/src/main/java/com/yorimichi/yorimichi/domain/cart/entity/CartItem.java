@@ -24,6 +24,7 @@ public class CartItem {
     private Long cartItemId;
     private Long cartId;
     private Long productId;
+    private Long groupBuyId;
     private Integer quantity;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -45,7 +46,7 @@ public class CartItem {
 
     /** 담은 뒤 재고가 줄어들어 주문할 수 없게 된 상태인지 */
     public boolean isAvailable() {
-        return "ACTIVE".equals(productStatus)
+        return ("ACTIVE".equals(productStatus) || "GROUP_BUY".equals(productStatus))
                 && stock != null
                 && quantity != null
                 && stock >= quantity;

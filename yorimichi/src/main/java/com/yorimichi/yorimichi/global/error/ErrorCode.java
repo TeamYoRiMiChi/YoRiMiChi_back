@@ -32,7 +32,13 @@ public enum ErrorCode {
     CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "G001", "存在しないカテゴリです。"),
 
     // Cart
-    CART_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "T001", "カートに該当する商品がありません。");
+    CART_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "T001", "カートに該当する商品がありません。"),
+    CART_EMPTY(HttpStatus.BAD_REQUEST, "T002", "カートに商品がありません。"),
+
+    // Order
+    ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "O001", "存在しない注文です。"),
+    ADDRESS_NOT_FOUND(HttpStatus.BAD_REQUEST, "O002", "配送先を登録してください。"),
+    CUSTOMS_CODE_REQUIRED(HttpStatus.BAD_REQUEST, "O003", "個人通関固有符号を登録してください。");
 
     private final HttpStatus status;
     private final String code;
