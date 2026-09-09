@@ -42,17 +42,14 @@ public class ProductService {
         int safeSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
         int offset = (safePage - 1) * safeSize;
 
-<<<<<<< HEAD
         String saleTypeFilter = blankToNull(saleType);
 
-        // 카테고리 1(すべて)은 전체 조회이므로 조건에서 뺍니다
+        // 카테고리 1번은 "전체 보기"용 가상 카테고리라 조건에서 뺍니다.
+        // 프론트의 CATEGORIES에서도 id 1을 'すべて'로 쓰고 있습니다.
+        //
+        // DB의 1번을 실제 카테고리로 쓰기로 바꾸셨다면
+        // 이 줄을 지우고 프론트의 CATEGORIES도 함께 고쳐야 합니다.
         Long categoryFilter = (categoryId == null || categoryId == 1L) ? null : categoryId;
-=======
-     // categoryId가 없으면 전체 조회,
-     // 값이 있으면 해당 카테고리만 조회합니다.
-     // categoryId=1은 식품 카테고리입니다.
-        Long categoryFilter = categoryId;
->>>>>>> branch 'master' of https://github.com/TeamYoRiMiChi/YoRiMiChi_back.git
 
         String keywordFilter = blankToNull(keyword);
 
