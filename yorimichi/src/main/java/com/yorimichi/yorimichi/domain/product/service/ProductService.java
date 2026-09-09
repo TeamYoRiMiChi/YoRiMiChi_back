@@ -44,12 +44,9 @@ public class ProductService {
 
         String saleTypeFilter = blankToNull(saleType);
 
-        // 카테고리 1번은 "전체 보기"용 가상 카테고리라 조건에서 뺍니다.
-        // 프론트의 CATEGORIES에서도 id 1을 'すべて'로 쓰고 있습니다.
-        //
-        // DB의 1번을 실제 카테고리로 쓰기로 바꾸셨다면
-        // 이 줄을 지우고 프론트의 CATEGORIES도 함께 고쳐야 합니다.
-        Long categoryFilter = (categoryId == null || categoryId == 1L) ? null : categoryId;
+        // 카테고리는 보낸 값을 그대로 씁니다.
+        // 전체 보기는 프론트가 categoryId를 아예 보내지 않는 방식입니다.
+        Long categoryFilter = categoryId;
 
         String keywordFilter = blankToNull(keyword);
 
