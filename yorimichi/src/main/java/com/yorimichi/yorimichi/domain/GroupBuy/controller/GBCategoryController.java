@@ -25,4 +25,6 @@ public class GBCategoryController {
                 gbCategoryService.getCategories()
         ); 
     }
+    
+    
 }

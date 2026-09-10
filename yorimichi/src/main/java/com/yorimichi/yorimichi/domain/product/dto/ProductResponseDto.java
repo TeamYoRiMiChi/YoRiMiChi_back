@@ -18,6 +18,7 @@ public class ProductResponseDto {
 
     private final Long productId;
     private final Long categoryId;
+    private final String saleType;
     private final String brand;
     private final String productName;
     private final String productNameJp;
@@ -33,6 +34,7 @@ public class ProductResponseDto {
     public ProductResponseDto(Product p) {
         this.productId = p.getProductId();
         this.categoryId = p.getCategoryId();
+        this.saleType = p.getSaleType();
         this.brand = p.getBrand();
         this.productName = p.getProductName();
         this.productNameJp = p.getProductNameJp();

@@ -9,54 +9,31 @@ import com.yorimichi.yorimichi.domain.product.entity.Product;
 import com.yorimichi.yorimichi.domain.product.repository.ProductMapper;
 import com.yorimichi.yorimichi.global.error.CustomException;
 import com.yorimichi.yorimichi.global.error.ErrorCode;
-import com.yorimichi.yorimichi.global.response.PageResponse;
 
-import java.util.List;
-
+/**
+ * 상품 공용 서비스
+ *
+ * 해외직구·공동구매 어느 쪽에도 속하지 않는,
+ * 판매 방식과 무관한 조회만 담당합니다.
+ *
+ * 목록 조회는 각 도메인이 맡습니다.
+ *   해외직구 → OverseasProductService
+ *   공동구매 → GroupBuyProductService
+ *
+ * 그래야 한쪽 기능을 고칠 때 다른 쪽 코드를 건드리지 않습니다.
+ */
 @Service
 @RequiredArgsConstructor
 public class ProductService {
 
-    private static final int MAX_PAGE_SIZE = 50;
-
     private final ProductMapper productMapper;
 
     /**
-     * 상품 목록 조회
+     * 상품 단건 조회 (판매 방식 무관)
      *
-     * 페이지 번호와 크기를 서버에서 한 번 더 다듬습니다.
-     * 프론트에서 잘못된 값(0페이지, 1000개 요청)이 와도
-     * 서버가 무리한 조회를 하지 않도록 막는 역할입니다.
+     * 장바구니·주문처럼 이미 담긴 상품을 다시 읽을 때 씁니다.
+     * 화면에서 목록을 그릴 때는 각 도메인 서비스를 쓰세요.
      */
-    @Transactional(readOnly = true)
-    public PageResponse<ProductResponseDto> getProducts(Long categoryId,
-                                                        String keyword,
-                                                        String sort,
-                                                        int page,
-                                                        int size) {
-
-        int safePage = Math.max(page, 1);
-        int safeSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
-        int offset = (safePage - 1) * safeSize;
-
-        // 카테고리 1(すべて)은 전체 조회이므로 조건에서 뺍니다
-        Long categoryFilter = (categoryId == null || categoryId == 1L) ? null : categoryId;
-
-        String keywordFilter = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
-
-        List<Product> products =
-                productMapper.findAll(categoryFilter, keywordFilter, sort, offset, safeSize);
-
-        long total = productMapper.countAll(categoryFilter, keywordFilter);
-
-        List<ProductResponseDto> content = products.stream()
-                .map(ProductResponseDto::new)
-                .toList();
-
-        return new PageResponse<>(content, safePage, safeSize, total);
-    }
-
-    /** 상품 단건 조회 */
     @Transactional(readOnly = true)
     public ProductResponseDto getProduct(Long productId) {
         Product product = productMapper.findById(productId)

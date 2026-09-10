@@ -12,4 +12,9 @@ import com.yorimichi.yorimichi.domain.GroupBuy.dto.GroupBuyResponseDto;
 public interface GroupBuyMapper {
 
     Optional<GroupBuyResponseDto> findById(@Param("groupBuyId") Long groupBuyId);
+    
+    //
+    
+    
+    
 }

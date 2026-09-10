@@ -63,12 +63,13 @@ public class SecurityConfig {
                 .requestMatchers("/api/users/login").permitAll()                     // 로그인
                 .requestMatchers("/api/users/check-email").permitAll()               // 이메일 중복 확인
                 .requestMatchers("/api/auth/**", "/api/oauth/**").permitAll()        // 소셜 로그인
-
                 // 상품·카테고리 조회는 비로그인도 가능
                 .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/overseas/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/gb-categories/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/group-buys/**").permitAll()
+
                 // 나머지는 로그인 필요
                 .anyRequest().authenticated()
             )
