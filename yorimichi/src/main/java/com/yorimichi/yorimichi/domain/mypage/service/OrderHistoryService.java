@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-//import com.yorimichi.yorimichi.domain.mypage.dto.OrderDetailResponseDto;
 import com.yorimichi.yorimichi.domain.mypage.dto.OrderHistoryResponseDto;
 import com.yorimichi.yorimichi.domain.mypage.dto.OrderItemResponseDto;
 import com.yorimichi.yorimichi.domain.mypage.repository.OrderHistoryMapper;
@@ -44,8 +43,4 @@ public class OrderHistoryService {
 			totalOrders
 		);
 	}
-	
-//	public OrderDetailResponseDto getOrderDetail(long orderId, long memberId) {
-//		return new OrderDetailResponseDto();
-//	}
 }

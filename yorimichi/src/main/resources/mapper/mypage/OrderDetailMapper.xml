@@ -4,30 +4,133 @@
   "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.yorimichi.yorimichi.domain.mypage.repository.OrderDetailMapper">
-	<resultMap id="orderDetailMap"
-           type="com.yorimichi.yorimichi.domain.mypage.entity.OrderDetail">
 
-    	<id property="orderId" column="order_id"/>
+    <resultMap id="orderDetailResultMap"
+        type="com.yorimichi.yorimichi.domain.mypage.entity.OrderDetail">
 
-    	<result property="orderNumber" column="order_number"/>
-    	<result property="orderType" column="order_type"/>
-    	<result property="totalAmount" column="total_amount"/>
-    	<result property="orderStatus" column="order_status"/>
-    	<result property="orderedAt" column="ordered_at"/>
-	</resultMap>
-	
+        <id property="orderId" column="order_id"/>
 
-    <select id="findOrderDetailByMemberIdAndOrderId" resultMap="orderDetailMap">
-    	SELECT
-        	order_id,
-        	order_number,
-        	order_type,
-        	total_amount,
-        	order_status,
-        	ordered_at
-    	FROM ORDERS
-    	WHERE member_id = #{memberId}
-    	ORDER BY order_id DESC
-    	LIMIT #{size} OFFSET #{offset}
-	</select>
+        <result property="memberId" column="member_id"/>
+        <result property="groupBuyId" column="group_buy_id"/>
+
+        <result property="orderNumber" column="order_number"/>
+        <result property="orderType" column="order_type"/>
+
+        <result property="receiverName" column="receiver_name"/>
+        <result property="receiverPhone" column="receiver_phone"/>
+        <result property="postalCode" column="postal_code"/>
+        <result property="address" column="address"/>
+        <result property="addressDetail" column="address_detail"/>
+        <result property="personalCustomsCode" column="personal_customs_code"/>
+
+        <result property="appliedExchangeRate" column="applied_exchange_rate"/>
+        <result property="productAmount" column="product_amount"/>
+        <result property="shippingFee" column="shipping_fee"/>
+        <result property="customsDuty" column="customs_duty"/>
+        <result property="totalAmount" column="total_amount"/>
+
+        <result property="orderStatus" column="order_status"/>
+
+        <result property="orderedAt" column="ordered_at"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+
+    <resultMap id="orderPaymentResultMap"
+        type="com.yorimichi.yorimichi.domain.mypage.entity.OrderPayment">
+
+        <id property="paymentId" column="payment_id"/>
+
+        <result property="orderId" column="order_id"/>
+        <result property="paymentMethod" column="payment_method"/>
+        <result property="paymentStatus" column="payment_status"/>
+        <result property="amount" column="amount"/>
+        <result property="paidAt" column="paid_at"/>
+        <result property="cancelledAt" column="cancelled_at"/>
+        <result property="transactionId" column="transaction_id"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+
+    <resultMap id="orderShippingResultMap"
+        type="com.yorimichi.yorimichi.domain.mypage.entity.OrderShipping">
+
+        <id property="shippingId" column="shipping_id"/>
+
+        <result property="orderId" column="order_id"/>
+        <result property="trackingNumber" column="tracking_number"/>
+        <result property="carrier" column="carrier"/>
+        <result property="shippingStatus" column="shipping_status"/>
+        <result property="shippedAt" column="shipped_at"/>
+        <result property="deliveredAt" column="delivered_at"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+
+    <!-- 주문정보 상세 조회 -->
+    <select id="findOrderDetailByMemberIdAndOrderId" resultMap="orderDetailResultMap">
+        SELECT
+            order_id,
+            member_id,
+            group_buy_id,
+            order_number,
+            order_type,
+            receiver_name,
+            receiver_phone,
+            postal_code,
+            address,
+            address_detail,
+            personal_customs_code,
+            applied_exchange_rate,
+            product_amount,
+            shipping_fee,
+            customs_duty,
+            total_amount,
+            order_status,
+            ordered_at,
+            created_at,
+            updated_at
+        FROM orders
+        WHERE member_id = #{memberId}
+        AND order_id = #{orderId}
+    </select>
+
+
+    <!-- 결제 정보 조회 -->
+    <select id="findPaymentByOrderId" resultMap="orderPaymentResultMap">
+        SELECT
+            payment_id,
+            order_id,
+            payment_method,
+            payment_status,
+            amount,
+            paid_at,
+            cancelled_at,
+            transaction_id,
+            created_at,
+            updated_at
+        FROM payment
+        WHERE order_id = #{orderId}
+    </select>
+
+
+    <!-- 배송 정보 조회 -->
+    <select id="findShippingByOrderId" resultMap="orderShippingResultMap">
+        SELECT
+            shipping_id,
+            order_id,
+            tracking_number,
+            carrier,
+            shipping_status,
+            shipped_at,
+            delivered_at,
+            created_at,
+            updated_at
+        FROM shipping
+        WHERE order_id = #{orderId}
+    </select>
+
 </mapper>
