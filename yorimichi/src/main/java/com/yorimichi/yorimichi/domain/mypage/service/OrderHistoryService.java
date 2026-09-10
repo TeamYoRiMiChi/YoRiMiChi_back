@@ -42,6 +42,5 @@ public class OrderHistoryService {
 			safeSize,
 			totalOrders
 		);
-				
 	}
 }
