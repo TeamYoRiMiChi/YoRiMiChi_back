@@ -1,4 +1,4 @@
-name: Build and push backend image
+name: Build and deploy backend image
 
 on:
   workflow_dispatch:
@@ -10,6 +10,8 @@ permissions:
 env:
   AWS_REGION: ap-northeast-2
   ECR_REPOSITORY: yorimichi-prod-backend
+  ECS_CLUSTER: yorimichi-prod-cluster
+  ECS_SERVICE: yorimichi-prod-backend-service
 
 jobs:
   build-and-push:
@@ -45,3 +47,20 @@ jobs:
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
             ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ steps.commit.outputs.short_sha }}
+      
+      - name: Deploy backend service
+        shell: bash
+        run: |
+          aws ecs update-service \
+            --cluster "$ECS_CLUSTER" \
+            --service "$ECS_SERVICE" \
+            --force-new-deployment \
+            --region "$AWS_REGION"
+
+      - name: Wait for backend service stability
+        shell: bash
+        run: |
+          aws ecs wait services-stable \
+            --cluster "$ECS_CLUSTER" \
+            --services "$ECS_SERVICE" \
+            --region "$AWS_REGION"
