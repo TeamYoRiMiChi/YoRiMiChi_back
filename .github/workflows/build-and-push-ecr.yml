@@ -1,7 +1,17 @@
 name: Build and deploy backend image
 
 on:
+  push:
+    branches:
+      - master
+    paths:
+      - "yorimichi/**"
+      - ".github/workflows/build-and-push-ecr.yml"
   workflow_dispatch:
+
+concurrency:
+  group: backend-production-deploy
+  cancel-in-progress: true
 
 permissions:
   id-token: write
