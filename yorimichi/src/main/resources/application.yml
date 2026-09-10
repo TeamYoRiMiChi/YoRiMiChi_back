@@ -6,7 +6,7 @@ spring:
     name: yorimichi
 
   profiles:
-    active: local
+    active: rds
 
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect
@@ -100,7 +100,9 @@ google:
 
 
 # ============================================
-# LOCAL
+# LOCAL — 로컬 MySQL
+#
+# 평소 개발할 때 쓰는 기본 프로필입니다.
 # ============================================
 
 ---
@@ -117,7 +119,15 @@ spring:
 
 
 # ============================================
-# RDS
+# RDS — AWS 운영 DB
+#
+# 접속 전에 SSM 터널을 먼저 열어야 합니다.
+#   .\scripts\connect-rds.ps1
+# 그 창을 닫으면 연결이 끊깁니다.
+#
+# 계정은 개인별로 다르므로 환경변수로 분리합니다.
+#   DB_USERNAME : 본인 IAM 사용자명 (예: yoo-youngsu)
+#   DB_PASSWORD : connect-rds.ps1이 클립보드에 복사해준 값
 # ============================================
 
 ---
@@ -129,5 +139,11 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://127.0.0.1:13306/yorimichi?serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8
-    username: 
+    username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+
+  # 운영 DB는 스키마를 코드가 건드리지 않도록 감니다
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
