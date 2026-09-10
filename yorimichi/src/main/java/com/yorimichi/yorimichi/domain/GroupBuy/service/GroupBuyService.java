@@ -20,12 +20,12 @@ public class GroupBuyService {
 
     // 조회만 Controller에서 404로 응답
     @Transactional(readOnly = true)
-    public Optional<GroupBuyResponseDto> getGroupBuy(Long groupBuyId) {
-        // 공동구매 번호는 1 이상의 값으로
-        if (groupBuyId == null || groupBuyId <= 0) {
+    public Optional<GroupBuyResponseDto> getGroupBuyByProductId(Long productId) {
+        // 상품 번호는 1 이상의 값으로
+        if (productId == null || productId <= 0) {
             throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
-        return groupBuyMapper.findById(groupBuyId);
+        return groupBuyMapper.findByProductId(productId);
     }
 }

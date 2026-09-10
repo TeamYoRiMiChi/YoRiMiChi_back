@@ -21,10 +21,10 @@ public class GroupBuyController {
 
     private final GroupBuyService groupBuyService;
 
-    @GetMapping("/{groupBuyId}")
+    @GetMapping("/{productId}")
     public ResponseEntity<ApiResponse<GroupBuyResponseDto>> getGroupBuy(
-            @PathVariable("groupBuyId") Long groupBuyId) {
-        return groupBuyService.getGroupBuy(groupBuyId)
+            @PathVariable("productId") Long productId) {
+        return groupBuyService.getGroupBuyByProductId(productId)
                 .map(detail -> ResponseEntity.ok(ApiResponse.success(detail)))
               
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
