@@ -59,14 +59,14 @@
         	item_total,
         	created_at,
         	updated_at
-    	FROM order_item
+    	FROM ORDER_ITEM
     	WHERE order_id = #{orderId}
     	ORDER BY order_item_id ASC
 	</select>
 	
 	<select id="countOrderHistoriesByMemberId" resultType="long">
     	SELECT COUNT(*)
-    	FROM orders
+    	FROM ORDERS
     	WHERE member_id = #{memberId}
 	</select>
 </mapper>

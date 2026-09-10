@@ -93,7 +93,7 @@
             ordered_at,
             created_at,
             updated_at
-        FROM orders
+        FROM ORDERS
         WHERE member_id = #{memberId}
         AND order_id = #{orderId}
     </select>
@@ -112,7 +112,7 @@
             transaction_id,
             created_at,
             updated_at
-        FROM payment
+        FROM PAYMENT
         WHERE order_id = #{orderId}
     </select>
 
@@ -129,7 +129,7 @@
             delivered_at,
             created_at,
             updated_at
-        FROM shipping
+        FROM SHIPPING
         WHERE order_id = #{orderId}
     </select>
 
