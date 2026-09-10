@@ -35,6 +35,12 @@ public enum ErrorCode {
     CART_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "T001", "カートに該当する商品がありません。"),
     CART_EMPTY(HttpStatus.BAD_REQUEST, "T002", "カートに商品がありません。"),
 
+    // Group buy
+    GROUP_BUY_NOT_FOUND(HttpStatus.NOT_FOUND, "B001", "共同購入が見つかりません。"),
+    GROUP_BUY_CLOSED(HttpStatus.CONFLICT, "B002", "この共同購入の募集は終了しています。"),
+    ALREADY_PARTICIPATING(HttpStatus.CONFLICT, "B003", "すでにこの共同購入へ申し込んでいます。"),
+    GROUP_BUY_CAPACITY_EXCEEDED(HttpStatus.CONFLICT, "B004", "申し込み可能な数量を超えています。"),
+
     // Order
     ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "O001", "存在しない注文です。"),
     ADDRESS_NOT_FOUND(HttpStatus.BAD_REQUEST, "O002", "配送先を登録してください。"),

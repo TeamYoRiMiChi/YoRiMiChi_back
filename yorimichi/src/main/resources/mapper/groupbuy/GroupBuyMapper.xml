@@ -39,4 +39,76 @@
                  gb.group_buy_id DESC
         LIMIT 1
     </select>
+
+    <select id="findByProductIdForUpdate" resultMap="groupBuyDetailResultMap">
+        SELECT gb.group_buy_id, gb.product_id,
+               p.product_name, p.product_name_jp, p.brand,
+               p.price_jpy, p.original_price_jpy, p.thumbnail_url,
+               gb.title, gb.description, gb.target_quantity,
+               gb.current_quantity, gb.start_date, gb.end_date, gb.status
+        FROM GROUP_BUY gb
+        JOIN PRODUCT p ON p.product_id = gb.product_id
+        WHERE gb.product_id = #{productId}
+        ORDER BY CASE WHEN gb.status = 'RECRUITING' THEN 0 ELSE 1 END,
+                 gb.group_buy_id DESC
+        LIMIT 1
+        FOR UPDATE
+    </select>
+
+    <resultMap id="participantResultMap"
+               type="com.yorimichi.yorimichi.domain.GroupBuy.entity.GroupBuyParticipant">
+        <id property="participantId" column="participant_id"/>
+        <result property="groupBuyId" column="group_buy_id"/>
+        <result property="memberId" column="member_id"/>
+        <result property="quantity" column="quantity"/>
+        <result property="participationStatus" column="participation_status"/>
+    </resultMap>
+
+    <select id="findParticipation" resultMap="participantResultMap">
+        SELECT participant_id, group_buy_id, member_id, quantity, participation_status
+        FROM GROUP_BUY_PARTICIPANT
+        WHERE group_buy_id = #{groupBuyId}
+          AND member_id = #{memberId}
+        ORDER BY participant_id DESC
+        LIMIT 1
+    </select>
+
+    <insert id="insertParticipation"
+            parameterType="com.yorimichi.yorimichi.domain.GroupBuy.entity.GroupBuyParticipant"
+            useGeneratedKeys="true" keyProperty="participantId">
+        INSERT INTO GROUP_BUY_PARTICIPANT
+            (group_buy_id, member_id, quantity, participation_status)
+        VALUES
+            (#{groupBuyId}, #{memberId}, #{quantity}, #{participationStatus})
+    </insert>
+
+    <update id="rejoinParticipation">
+        UPDATE GROUP_BUY_PARTICIPANT
+        SET quantity = #{quantity},
+            participation_status = 'JOINED',
+            joined_at = CURRENT_TIMESTAMP,
+            cancelled_at = NULL
+        WHERE participant_id = #{participantId}
+    </update>
+
+    <update id="increaseParticipationQuantity">
+        UPDATE GROUP_BUY_PARTICIPANT
+        SET quantity = quantity + #{quantity},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE participant_id = #{participantId}
+    </update>
+
+    <update id="increaseCurrentQuantity">
+        UPDATE GROUP_BUY
+        SET current_quantity = current_quantity + #{quantity}
+        WHERE group_buy_id = #{groupBuyId}
+    </update>
+
+    <update id="completeGroupBuy">
+        UPDATE GROUP_BUY
+        SET status = 'SUCCESS',
+            updated_at = CURRENT_TIMESTAMP
+        WHERE group_buy_id = #{groupBuyId}
+          AND current_quantity &gt;= target_quantity
+    </update>
 </mapper>
