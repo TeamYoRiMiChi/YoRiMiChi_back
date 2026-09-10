@@ -32,6 +32,7 @@ public class GroupBuyProductController {
 
     @GetMapping
     public ApiResponse<PageResponse<ProductResponseDto>> getProducts(
+            @RequestParam(value = "status", required = false) String status,
             @RequestParam(value = "categoryId", required = false) Long categoryId,
             @RequestParam(value = "keyword", required = false) String keyword,
             @RequestParam(value = "sort", required = false, defaultValue = "recommend") String sort,
@@ -39,10 +40,16 @@ public class GroupBuyProductController {
             @RequestParam(value = "size", required = false, defaultValue = "12") int size) {
 
         return ApiResponse.success(
-                groupBuyProductService.getProducts(categoryId, keyword, sort, page, size)
+                groupBuyProductService.getProducts(
+                        status,
+                        categoryId,
+                        keyword,
+                        sort,
+                        page,
+                        size
+                )
         );
     }
-
     @GetMapping("/{productId}")
     public ApiResponse<ProductResponseDto> getProduct(
             @PathVariable("productId") Long productId) {

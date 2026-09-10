@@ -33,6 +33,7 @@ public interface ProductMapper {
                           @Param("sort") String sort,
                           @Param("offset") int offset,
                           @Param("size") int size);
+    
 
     /** 같은 조건의 전체 개수 (페이지 수 계산용) */
     long countAll(@Param("saleType") String saleType,
@@ -41,4 +42,28 @@ public interface ProductMapper {
 
     /** 상품 단건 조회 */
     Optional<Product> findById(@Param("productId") Long productId);
+
+    
+    
+    //공동구매 상품 상태별 목록조회
+	List<Product> findGroupBuyAll(
+	@Param("status") String status,
+    @Param("categoryId") Long categoryId,
+    @Param("keyword") String keyword,
+    @Param("sort") String sort,
+    @Param("offset") int offset,
+    @Param("size") int size
+    );
+	
+	
+	
+	//공동구매 상품 상태별 전체개수
+	long countGroupBuyAll(
+	        @Param("status") String status,
+	        @Param("categoryId") Long categoryId,
+	        @Param("keyword") String keyword
+	);
+	
+	
+	
 }

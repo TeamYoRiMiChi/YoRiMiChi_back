@@ -92,11 +92,77 @@
     </select>
 
 
+	
+    <!-- 공동구매 상품 검색 조건 -->
+    <sql id="groupBuySearchConditions">
+        <where>
+            sale_type = 'GROUP_BUY'
+
+            <if test="status != null and status != ''">
+                AND status = #{status}
+            </if>
+
+            <if test="categoryId != null">
+                AND category_id = #{categoryId}
+            </if>
+
+            <if test="keyword != null and keyword != ''">
+                AND (
+                    product_name LIKE CONCAT('%', #{keyword}, '%')
+                    OR product_name_jp LIKE CONCAT('%', #{keyword}, '%')
+                    OR brand LIKE CONCAT('%', #{keyword}, '%')
+                )
+            </if>
+        </where>
+    </sql>
+
+
+    <!-- 공동구매 상태별 목록 -->
+    <select id="findGroupBuyAll" resultMap="productResultMap">
+        SELECT <include refid="productColumns"/>
+        FROM PRODUCT
+
+        <include refid="groupBuySearchConditions"/>
+
+        <choose>
+            <when test="sort == 'popular'">
+                ORDER BY sales_count DESC, product_id DESC
+            </when>
+
+            <when test="sort == 'newest'">
+                ORDER BY created_at DESC, product_id DESC
+            </when>
+
+            <when test="sort == 'priceAsc'">
+                ORDER BY price_jpy ASC, product_id DESC
+            </when>
+
+            <otherwise>
+                ORDER BY product_id ASC
+            </otherwise>
+        </choose>
+
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+
+    <!-- 공동구매 상태별 전체 개수 -->
+    <select id="countGroupBuyAll" resultType="long">
+        SELECT COUNT(*)
+        FROM PRODUCT
+
+        <include refid="groupBuySearchConditions"/>
+    </select>
+
     <!-- 상품 단건 -->
     <select id="findById" resultMap="productResultMap">
         SELECT <include refid="productColumns"/>
         FROM PRODUCT
         WHERE product_id = #{productId}
     </select>
+    
+    
+    
+    
 
 </mapper>

@@ -32,23 +32,37 @@ public class GroupBuyProductService {
 
     /** 공동구매 상품 목록 */
     @Transactional(readOnly = true)
-    public PageResponse<ProductResponseDto> getProducts(Long categoryId,
-                                                        String keyword,
-                                                        String sort,
-                                                        int page,
-                                                        int size) {
+    public PageResponse<ProductResponseDto> getProducts(
+            String status,
+            Long categoryId,
+            String keyword,
+            String sort,
+            int page,
+            int size) {
 
         int safePage = Math.max(page, 1);
         int safeSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
         int offset = (safePage - 1) * safeSize;
 
         String keywordFilter = blankToNull(keyword);
+        String statusFilter = blankToNull(status);
 
-        List<Product> products = productMapper.findAll(
-                Product.SALE_TYPE_GROUP_BUY, categoryId, keywordFilter, sort, offset, safeSize);
+     // 공동구매 상태에 맞는 상품 목록 조회
+        List<Product> products = productMapper.findGroupBuyAll(
+                statusFilter,
+                categoryId,
+                keywordFilter,
+                sort,
+                offset,
+                safeSize
+        );
 
-        long total = productMapper.countAll(
-                Product.SALE_TYPE_GROUP_BUY, categoryId, keywordFilter);
+        // 해당 조건의 전체 상품 개수 조회
+        long total = productMapper.countGroupBuyAll(
+                statusFilter,
+                categoryId,
+                keywordFilter
+        );
 
         List<ProductResponseDto> content = products.stream()
                 .map(ProductResponseDto::new)
