@@ -30,6 +30,7 @@ public class CartItem {
     private LocalDateTime updatedAt;
 
     /* ===== PRODUCT 조인 값 ===== */
+    private String saleType;
     private String brand;
     private String productName;
     private BigDecimal priceJpy;
@@ -37,6 +38,11 @@ public class CartItem {
     private String thumbnailUrl;
     private Integer stock;
     private String productStatus;
+
+    /* ===== GROUP_BUY 조인 값 ===== */
+    private String groupBuyStatus;
+    private LocalDateTime groupBuyStartDate;
+    private LocalDateTime groupBuyEndDate;
 
     /** 이 항목의 소계 (단가 × 수량) */
     public BigDecimal getSubtotal() {
@@ -49,6 +55,19 @@ public class CartItem {
         return ("ACTIVE".equals(productStatus) || "GROUP_BUY".equals(productStatus))
                 && stock != null
                 && quantity != null
-                && stock >= quantity;
+                && stock >= quantity
+                && !isGroupBuyClosed();
+    }
+
+    /** 이미 담은 공동구매 상품의 모집이 끝났는지 */
+    public boolean isGroupBuyClosed() {
+        if (!"GROUP_BUY".equals(saleType) || groupBuyId == null) return false;
+
+        LocalDateTime now = LocalDateTime.now();
+        return !"RECRUITING".equals(groupBuyStatus)
+                || groupBuyStartDate == null
+                || groupBuyEndDate == null
+                || now.isBefore(groupBuyStartDate)
+                || !now.isBefore(groupBuyEndDate);
     }
 }

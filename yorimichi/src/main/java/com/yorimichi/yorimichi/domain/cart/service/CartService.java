@@ -9,12 +9,15 @@ import com.yorimichi.yorimichi.domain.cart.dto.CartResponseDto;
 import com.yorimichi.yorimichi.domain.cart.entity.Cart;
 import com.yorimichi.yorimichi.domain.cart.entity.CartItem;
 import com.yorimichi.yorimichi.domain.cart.repository.CartMapper;
+import com.yorimichi.yorimichi.domain.GroupBuy.dto.GroupBuyResponseDto;
+import com.yorimichi.yorimichi.domain.GroupBuy.repository.GroupBuyMapper;
 import com.yorimichi.yorimichi.domain.product.entity.Product;
 import com.yorimichi.yorimichi.domain.product.repository.ProductMapper;
 import com.yorimichi.yorimichi.global.error.CustomException;
 import com.yorimichi.yorimichi.global.error.ErrorCode;
 
 import java.util.List;
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +25,7 @@ public class CartService {
 
     private final CartMapper cartMapper;
     private final ProductMapper productMapper;
+    private final GroupBuyMapper groupBuyMapper;
 
     /** 내 장바구니 조회 */
     @Transactional(readOnly = true)
@@ -47,6 +51,8 @@ public class CartService {
                 && !"GROUP_BUY".equals(product.getStatus())) {
             throw new CustomException(ErrorCode.PRODUCT_NOT_FOUND);
         }
+
+        validateGroupBuyOpen(product);
 
         Cart cart = getOrCreateCart(memberId);
 
@@ -83,6 +89,7 @@ public class CartService {
         Product product = productMapper.findById(item.getProductId())
                 .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
 
+        validateGroupBuyOpen(product);
         validateStock(product, quantity);
 
         cartMapper.updateItemQuantity(cartItemId, quantity);
@@ -132,6 +139,28 @@ public class CartService {
         Integer stock = product.getStock();
         if (stock == null || stock < quantity) {
             throw new CustomException(ErrorCode.OUT_OF_STOCK);
+        }
+    }
+
+    /** 공동구매 상품은 모집 중일 때만 장바구니에 담거나 수량을 바꿀 수 있습니다. */
+    private void validateGroupBuyOpen(Product product) {
+        if (!product.isGroupBuyOnly()) return;
+
+        GroupBuyResponseDto groupBuy = groupBuyMapper.findByProductId(product.getProductId())
+                .orElseThrow(() -> new CustomException(ErrorCode.GROUP_BUY_NOT_FOUND));
+        LocalDateTime now = LocalDateTime.now();
+
+        boolean closed = !"RECRUITING".equals(groupBuy.getStatus())
+                || groupBuy.getStartDate() == null
+                || groupBuy.getEndDate() == null
+                || now.isBefore(groupBuy.getStartDate())
+                || !now.isBefore(groupBuy.getEndDate())
+                || groupBuy.getCurrentQuantity() == null
+                || groupBuy.getTargetQuantity() == null
+                || groupBuy.getCurrentQuantity() >= groupBuy.getTargetQuantity();
+
+        if (closed) {
+            throw new CustomException(ErrorCode.GROUP_BUY_CLOSED);
         }
     }
 }

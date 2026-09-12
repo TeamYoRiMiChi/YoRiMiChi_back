@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 import com.yorimichi.yorimichi.domain.order.dto.OrderCheckoutResponseDto;
 import com.yorimichi.yorimichi.domain.order.dto.OrderCreateRequestDto;
 import com.yorimichi.yorimichi.domain.order.dto.OrderResponseDto;
@@ -39,10 +41,13 @@ public class OrderController {
     public ApiResponse<OrderCheckoutResponseDto> getCheckout(
             @AuthenticationPrincipal Long memberId,
             @RequestParam(value = "productId", required = false) Long productId,
-            @RequestParam(value = "quantity", required = false, defaultValue = "1") Integer quantity) {
+            @RequestParam(value = "quantity", required = false, defaultValue = "1") Integer quantity,
+            @RequestParam(value = "saleType", required = false) String saleType,
+            @RequestParam(value = "cartItemIds", required = false) List<Long> cartItemIds) {
 
         return ApiResponse.success(
-                orderService.getCheckout(requireLogin(memberId), productId, quantity)
+                orderService.getCheckout(
+                        requireLogin(memberId), productId, quantity, saleType, cartItemIds)
         );
     }
 

@@ -42,13 +42,14 @@ public class OrderService {
      * 실제 주문은 아직 만들지 않고 미리보기만 돌려줍니다.
      */
     @Transactional(readOnly = true)
-    public OrderCheckoutResponseDto getCheckout(Long memberId, Long productId, Integer quantity) {
+    public OrderCheckoutResponseDto getCheckout(Long memberId, Long productId, Integer quantity,
+                                                String saleType, List<Long> cartItemIds) {
 
         BigDecimal rate = getExchangeRate();
 
         List<OrderCheckoutItemDto> items = (productId != null)
                 ? List.of(toDirectItem(productId, quantity, rate))
-                : loadCartItems(memberId).stream()
+                : loadOrderableCartItems(memberId, saleType, cartItemIds).stream()
                         .map(ci -> toCheckoutItem(ci, rate))
                         .toList();
 
@@ -93,11 +94,14 @@ public class OrderService {
         BigDecimal rate = getExchangeRate();
 
         /* 1) 주문할 상품 확정 */
+        List<CartItem> orderedCartItems = request.isDirectPurchase()
+                ? List.of()
+                : loadOrderableCartItems(
+                        memberId, request.getSaleType(), request.getCartItemIds());
+
         List<OrderCheckoutItemDto> items = request.isDirectPurchase()
                 ? List.of(toDirectItem(request.getProductId(), request.getQuantity(), rate))
-                : loadCartItems(memberId).stream()
-                        .map(ci -> toCheckoutItem(ci, rate))
-                        .toList();
+                : orderedCartItems.stream().map(ci -> toCheckoutItem(ci, rate)).toList();
 
         /* 2) 배송지 확정 */
         ShippingTarget shipping = resolveAddress(memberId, request);
@@ -111,7 +115,7 @@ public class OrderService {
         Order order = Order.builder()
                 .memberId(memberId)
                 .orderNumber(generateOrderNumber())
-                .orderType("NORMAL")
+                .orderType("GROUP_BUY".equals(request.getSaleType()) ? "GROUP_BUY" : "NORMAL")
                 .receiverName(shipping.receiverName)
                 .receiverPhone(shipping.receiverPhone)
                 .postalCode(shipping.postalCode)
@@ -151,10 +155,9 @@ public class OrderService {
         orderMapper.insertPayment(order.getOrderId(), request.getPaymentMethod(), amounts.total);
         orderMapper.insertShipping(order.getOrderId());
 
-        /* 7) 장바구니 주문이었으면 비웁니다. 바로구매는 건드리지 않습니다 */
+        /* 7) 주문한 장바구니 항목만 삭제합니다. 품절 상품과 다른 판매 방식은 남깁니다. */
         if (!request.isDirectPurchase()) {
-            cartMapper.findCartByMemberId(memberId)
-                    .ifPresent(cart -> cartMapper.deleteAllItems(cart.getCartId()));
+            orderedCartItems.forEach(item -> cartMapper.deleteItem(item.getCartItemId()));
         }
 
         log.info("order created - orderNumber={}, memberId={}, direct={}, total={}",
@@ -216,6 +219,42 @@ public class OrderService {
             throw new CustomException(ErrorCode.CART_EMPTY);
         }
         return items;
+    }
+
+    /** 판매 방식이 같고 현재 주문 가능한 장바구니 상품만 고릅니다. */
+    private List<CartItem> loadOrderableCartItems(Long memberId, String saleType,
+                                                  List<Long> cartItemIds) {
+        String normalizedSaleType = normalizeSaleType(saleType);
+        boolean hasSelection = cartItemIds != null && !cartItemIds.isEmpty();
+
+        List<CartItem> matchingItems = loadCartItems(memberId).stream()
+                .filter(item -> !hasSelection || cartItemIds.contains(item.getCartItemId()))
+                .filter(item -> normalizedSaleType == null
+                        || normalizedSaleType.equals(item.getSaleType()))
+                .toList();
+
+        if (matchingItems.isEmpty()) {
+            throw new CustomException(ErrorCode.CART_EMPTY);
+        }
+
+        List<CartItem> orderableItems = matchingItems.stream()
+                .filter(CartItem::isAvailable)
+                .toList();
+
+        if (orderableItems.isEmpty()) {
+            throw new CustomException(ErrorCode.OUT_OF_STOCK);
+        }
+        return orderableItems;
+    }
+
+    private String normalizeSaleType(String saleType) {
+        if (saleType == null || saleType.isBlank()) return null;
+
+        String normalized = saleType.trim().toUpperCase();
+        if (!"OVERSEAS".equals(normalized) && !"GROUP_BUY".equals(normalized)) {
+            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+        return normalized;
     }
 
     /**

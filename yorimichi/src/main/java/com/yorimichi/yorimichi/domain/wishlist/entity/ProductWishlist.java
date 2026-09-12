@@ -32,6 +32,7 @@ public class ProductWishlist {
     private LocalDateTime createdAt;
 
     /* ===== PRODUCT 조인 값 ===== */
+    private String saleType;
     private String brand;
     private String productName;
     private BigDecimal priceJpy;
@@ -40,10 +41,21 @@ public class ProductWishlist {
     private Integer stock;
     private String productStatus;
 
+    /* ===== GROUP_BUY 조인 값 ===== */
+    private String groupBuyStatus;
+
     /** 지금도 구매할 수 있는 상품인지 */
     public boolean isAvailable() {
         return ("ACTIVE".equals(productStatus) || "GROUP_BUY".equals(productStatus))
                 && stock != null
-                && stock > 0;
+                && stock > 0
+                && !isGroupBuyClosed();
+    }
+
+    public boolean isGroupBuyClosed() {
+        return "GROUP_BUY".equals(saleType)
+                && groupBuyId != null
+                && !"RECRUITING".equals(groupBuyStatus)
+                && !"CLOSING_SOON".equals(groupBuyStatus);
     }
 }

@@ -96,49 +96,92 @@
     <!-- 공동구매 상품 검색 조건 -->
     <sql id="groupBuySearchConditions">
         <where>
-            sale_type = 'GROUP_BUY'
+            p.sale_type = 'GROUP_BUY'
+            AND p.status = 'ACTIVE'
 
-            <if test="status != null and status != ''">
-                AND status = #{status}
-            </if>
+            <choose>
+                <when test="status == 'RECRUITING'">
+                    AND gb.status = 'RECRUITING'
+                    AND gb.current_quantity &lt; gb.target_quantity
+                    AND gb.start_date &lt;= CURRENT_TIMESTAMP
+                    AND gb.end_date &gt; CURRENT_TIMESTAMP
+                </when>
+                <when test="status == 'CLOSING_SOON'">
+                    AND gb.status = 'RECRUITING'
+                    AND gb.current_quantity &lt; gb.target_quantity
+                    AND gb.end_date &gt; CURRENT_TIMESTAMP
+                    AND gb.end_date &lt;= DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 3 DAY)
+                </when>
+                <when test="status == 'COMPLETED'">
+                    AND (
+                        gb.status IN ('SUCCESS', 'FAILED', 'CANCELLED')
+                        OR gb.current_quantity &gt;= gb.target_quantity
+                        OR gb.end_date &lt;= CURRENT_TIMESTAMP
+                    )
+                </when>
+            </choose>
 
             <if test="categoryId != null">
-                AND category_id = #{categoryId}
+                AND p.category_id = #{categoryId}
             </if>
 
             <if test="keyword != null and keyword != ''">
                 AND (
-                    product_name LIKE CONCAT('%', #{keyword}, '%')
-                    OR product_name_jp LIKE CONCAT('%', #{keyword}, '%')
-                    OR brand LIKE CONCAT('%', #{keyword}, '%')
+                    p.product_name LIKE CONCAT('%', #{keyword}, '%')
+                    OR p.product_name_jp LIKE CONCAT('%', #{keyword}, '%')
+                    OR p.brand LIKE CONCAT('%', #{keyword}, '%')
                 )
             </if>
         </where>
     </sql>
 
+    <!-- 상품은 유지하고, 연결된 모집 중 화면에 사용할 한 건만 붙입니다. -->
+    <sql id="currentGroupBuyLeftJoin">
+        LEFT JOIN GROUP_BUY gb ON gb.group_buy_id = (
+            SELECT gb2.group_buy_id
+            FROM GROUP_BUY gb2
+            WHERE gb2.product_id = p.product_id
+            ORDER BY gb2.group_buy_id DESC
+            LIMIT 1
+        )
+    </sql>
+
 
     <!-- 공동구매 상태별 목록 -->
     <select id="findGroupBuyAll" resultMap="productResultMap">
-        SELECT <include refid="productColumns"/>
-        FROM PRODUCT
+        SELECT p.product_id, p.category_id, p.sale_type, p.brand,
+               p.product_name, p.product_name_jp, p.description,
+               p.price_jpy, p.original_price_jpy, p.stock, p.sales_count,
+               p.weight, p.original_url, p.thumbnail_url,
+               CASE
+                   WHEN gb.group_buy_id IS NULL THEN p.status
+                   WHEN gb.status IN ('SUCCESS', 'FAILED', 'CANCELLED') THEN gb.status
+                   WHEN gb.current_quantity &gt;= gb.target_quantity THEN 'SUCCESS'
+                   WHEN gb.end_date &lt;= CURRENT_TIMESTAMP THEN 'FAILED'
+                   WHEN gb.end_date &lt;= DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 3 DAY) THEN 'CLOSING_SOON'
+                   ELSE gb.status
+               END AS status,
+               p.created_at, p.updated_at
+        FROM PRODUCT p
+        <include refid="currentGroupBuyLeftJoin"/>
 
         <include refid="groupBuySearchConditions"/>
 
         <choose>
             <when test="sort == 'popular'">
-                ORDER BY sales_count DESC, product_id DESC
+                ORDER BY p.sales_count DESC, p.product_id DESC
             </when>
 
             <when test="sort == 'newest'">
-                ORDER BY created_at DESC, product_id DESC
+                ORDER BY COALESCE(gb.created_at, p.created_at) DESC, p.product_id DESC
             </when>
 
             <when test="sort == 'priceAsc'">
-                ORDER BY price_jpy ASC, product_id DESC
+                ORDER BY p.price_jpy ASC, p.product_id DESC
             </when>
 
             <otherwise>
-                ORDER BY product_id ASC
+                ORDER BY p.product_id ASC
             </otherwise>
         </choose>
 
@@ -149,7 +192,8 @@
     <!-- 공동구매 상태별 전체 개수 -->
     <select id="countGroupBuyAll" resultType="long">
         SELECT COUNT(*)
-        FROM PRODUCT
+        FROM PRODUCT p
+        <include refid="currentGroupBuyLeftJoin"/>
 
         <include refid="groupBuySearchConditions"/>
     </select>

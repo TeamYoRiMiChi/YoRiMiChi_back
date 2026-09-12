@@ -12,6 +12,7 @@
         <result property="createdAt"        column="created_at"/>
 
         <!-- PRODUCT 조인 값 -->
+        <result property="saleType"         column="sale_type"/>
         <result property="brand"            column="brand"/>
         <result property="productName"      column="product_name"/>
         <result property="priceJpy"         column="price_jpy"/>
@@ -19,6 +20,7 @@
         <result property="thumbnailUrl"     column="thumbnail_url"/>
         <result property="stock"            column="stock"/>
         <result property="productStatus"    column="product_status"/>
+        <result property="groupBuyStatus"   column="group_buy_status"/>
     </resultMap>
 
 
@@ -28,23 +30,32 @@
             w.wishlist_id,
             w.member_id,
             w.product_id,
-            (
-                SELECT gb.group_buy_id
-                FROM GROUP_BUY gb
-                WHERE gb.product_id = w.product_id
-                ORDER BY gb.group_buy_id DESC
-                LIMIT 1
-            ) AS group_buy_id,
+            gb.group_buy_id,
             w.created_at,
+            p.sale_type,
             p.brand,
             p.product_name,
             p.price_jpy,
             p.original_price_jpy,
             p.thumbnail_url,
             p.stock,
-            p.status AS product_status
+            p.status AS product_status,
+            CASE
+                WHEN gb.status IN ('SUCCESS', 'FAILED', 'CANCELLED') THEN gb.status
+                WHEN gb.current_quantity &gt;= gb.target_quantity THEN 'SUCCESS'
+                WHEN gb.end_date &lt;= CURRENT_TIMESTAMP THEN 'FAILED'
+                WHEN gb.end_date &lt;= DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 3 DAY) THEN 'CLOSING_SOON'
+                ELSE gb.status
+            END AS group_buy_status
         FROM WISHLIST w
         JOIN PRODUCT p ON p.product_id = w.product_id
+        LEFT JOIN GROUP_BUY gb ON gb.group_buy_id = (
+            SELECT gb2.group_buy_id
+            FROM GROUP_BUY gb2
+            WHERE gb2.product_id = w.product_id
+            ORDER BY gb2.group_buy_id DESC
+            LIMIT 1
+        )
         WHERE w.member_id = #{memberId}
         ORDER BY w.created_at DESC, w.wishlist_id DESC
     </select>

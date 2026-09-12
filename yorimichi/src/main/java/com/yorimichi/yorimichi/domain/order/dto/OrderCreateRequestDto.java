@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+
 /**
  * 주문 생성 요청
  *
@@ -29,6 +31,12 @@ public class OrderCreateRequestDto {
 
     /** 바로구매 수량 (productId가 있을 때만 사용) */
     private Integer quantity;
+
+    /** 장바구니 주문 판매 방식. OVERSEAS 또는 GROUP_BUY */
+    private String saleType;
+
+    /** 장바구니에서 사용자가 선택한 항목 번호 */
+    private List<Long> cartItemIds;
 
 
     /* ===== 배송지 ===== */

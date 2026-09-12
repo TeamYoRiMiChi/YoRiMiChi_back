@@ -35,8 +35,7 @@
         FROM GROUP_BUY gb
         JOIN PRODUCT p ON p.product_id = gb.product_id
         WHERE gb.product_id = #{productId}
-        ORDER BY CASE WHEN gb.status = 'RECRUITING' THEN 0 ELSE 1 END,
-                 gb.group_buy_id DESC
+        ORDER BY gb.group_buy_id DESC
         LIMIT 1
     </select>
 
@@ -49,8 +48,7 @@
         FROM GROUP_BUY gb
         JOIN PRODUCT p ON p.product_id = gb.product_id
         WHERE gb.product_id = #{productId}
-        ORDER BY CASE WHEN gb.status = 'RECRUITING' THEN 0 ELSE 1 END,
-                 gb.group_buy_id DESC
+        ORDER BY gb.group_buy_id DESC
         LIMIT 1
         FOR UPDATE
     </select>

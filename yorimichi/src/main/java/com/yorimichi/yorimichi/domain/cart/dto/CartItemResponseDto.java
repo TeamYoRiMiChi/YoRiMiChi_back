@@ -14,6 +14,9 @@ public class CartItemResponseDto {
     private final Long productId;
     private final String productStatus;
     private final Long groupBuyId;
+    private final String groupBuyStatus;
+    private final boolean groupBuyClosed;
+    private final String saleType;
     private final String brand;
     private final String productName;
     private final BigDecimal priceJpy;
@@ -29,6 +32,9 @@ public class CartItemResponseDto {
         this.productId = item.getProductId();
         this.productStatus = item.getProductStatus();
         this.groupBuyId = item.getGroupBuyId();
+        this.groupBuyStatus = item.getGroupBuyStatus();
+        this.groupBuyClosed = item.isGroupBuyClosed();
+        this.saleType = item.getSaleType();
         this.brand = item.getBrand();
         this.productName = item.getProductName();
         this.priceJpy = item.getPriceJpy();
