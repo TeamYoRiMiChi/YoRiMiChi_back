@@ -44,7 +44,14 @@ public enum ErrorCode {
     // Order
     ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "O001", "存在しない注文です。"),
     ADDRESS_NOT_FOUND(HttpStatus.BAD_REQUEST, "O002", "配送先を登録してください。"),
-    CUSTOMS_CODE_REQUIRED(HttpStatus.BAD_REQUEST, "O003", "個人通関固有符号を登録してください。");
+    CUSTOMS_CODE_REQUIRED(HttpStatus.BAD_REQUEST, "O003", "個人通関固有符号を登録してください。"),
+
+    // Coupon
+    COUPON_NOT_FOUND(HttpStatus.NOT_FOUND, "N001", "存在しないクーポンです。"),
+    DUPLICATE_COUPON_CODE(HttpStatus.CONFLICT, "N002", "既に使用されているクーポンコードです。"),
+    INVALID_COUPON_ISSUE_REQUEST(HttpStatus.BAD_REQUEST, "N003", "発給対象を指定してください。"),
+    COUPON_USAGE_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "N004", "発給可能な残り数量を超えています。"),
+    INVALID_COUPON_STATUS_CHANGE(HttpStatus.CONFLICT, "N005", "現在の状態では変更できないクーポンです。");
 
     private final HttpStatus status;
     private final String code;
