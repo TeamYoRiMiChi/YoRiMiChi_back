@@ -6,6 +6,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import com.yorimichi.yorimichi.domain.admin.dashboard.dto.RecentOrderResponseDto;
 import com.yorimichi.yorimichi.domain.admin.dashboard.dto.DashboardSummaryResponseDto;
 import com.yorimichi.yorimichi.domain.admin.dashboard.dto.DailySalesResponseDto;
 import com.yorimichi.yorimichi.domain.admin.dashboard.dto.OrderStatusCountResponseDto;
@@ -27,4 +28,6 @@ public interface AdminDashboardMapper {
             @Param("startUtc") LocalDateTime startUtc,
             @Param("endUtc") LocalDateTime endUtc
     );
+
+    List<RecentOrderResponseDto> findRecentOrders();
 }

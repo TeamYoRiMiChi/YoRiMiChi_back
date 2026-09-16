@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 
+import com.yorimichi.yorimichi.domain.admin.dashboard.dto.RecentOrderResponseDto;
 import com.yorimichi.yorimichi.domain.admin.dashboard.dto.DashboardOrderStatusResponseDto;
 import com.yorimichi.yorimichi.domain.admin.dashboard.dto.OrderStatusCountResponseDto;
 import com.yorimichi.yorimichi.domain.admin.dashboard.dto.DailySalesResponseDto;
@@ -147,6 +148,11 @@ public class AdminDashboardService {
         return new DashboardOrderStatusResponseDto(totalCount, statuses);
     }
 
+
+    public List<RecentOrderResponseDto> getRecentOrders(Long memberId) {
+    validateAdmin(memberId);
+    return adminDashboardMapper.findRecentOrders();
+    }
 
     private void validateAdmin(Long memberId) {
         if (memberId == null) {

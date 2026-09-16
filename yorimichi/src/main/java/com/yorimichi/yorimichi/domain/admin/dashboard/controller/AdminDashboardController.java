@@ -1,10 +1,13 @@
 package com.yorimichi.yorimichi.domain.admin.dashboard.controller;
 
+import java.util.List;
+
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.yorimichi.yorimichi.domain.admin.dashboard.dto.RecentOrderResponseDto;  
 import com.yorimichi.yorimichi.domain.admin.dashboard.dto.DashboardOrderStatusResponseDto;
 import com.yorimichi.yorimichi.domain.admin.dashboard.dto.DashboardSalesTrendResponseDto;
 import com.yorimichi.yorimichi.domain.admin.dashboard.dto.DashboardSummaryResponseDto;
@@ -44,6 +47,15 @@ public class AdminDashboardController {
     ) {
         return ApiResponse.success(
                 adminDashboardService.getOrderStatus(memberId)
+        );
+    }
+
+    @GetMapping("/recent-orders")
+    public ApiResponse<List<RecentOrderResponseDto>> getRecentOrders(
+            @AuthenticationPrincipal Long memberId
+    ) {
+        return ApiResponse.success(
+                adminDashboardService.getRecentOrders(memberId)
         );
     }
 }

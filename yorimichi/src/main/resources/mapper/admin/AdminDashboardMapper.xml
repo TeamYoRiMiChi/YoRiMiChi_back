@@ -81,4 +81,46 @@
         ORDER BY o.order_status ASC
     </select>
 
+    <resultMap id="recentOrderResultMap"
+           type="com.yorimichi.yorimichi.domain.admin.dashboard.dto.RecentOrderResponseDto">
+    <result property="orderId" column="order_id"/>
+    <result property="orderNumber" column="order_number"/>
+    <result property="memberName" column="member_name"/>
+    <result property="firstProductName" column="first_product_name"/>
+    <result property="itemCount" column="item_count"/>
+    <result property="totalAmount" column="total_amount"/>
+    <result property="orderStatus" column="order_status"/>
+    <result property="orderedAt" column="ordered_at"/>
+</resultMap>
+
+<select id="findRecentOrders" resultMap="recentOrderResultMap">
+    SELECT
+        o.order_id,
+        o.order_number,
+        m.name AS member_name,
+        (
+            SELECT oi.product_name
+            FROM ORDER_ITEM oi
+            WHERE oi.order_id = o.order_id
+            ORDER BY oi.order_item_id ASC
+            LIMIT 1
+        ) AS first_product_name,
+        (
+            SELECT COUNT(*)
+            FROM ORDER_ITEM oi
+            WHERE oi.order_id = o.order_id
+        ) AS item_count,
+        o.total_amount,
+        o.order_status,
+        o.ordered_at
+    FROM (
+        SELECT *
+        FROM ORDERS
+        ORDER BY ordered_at DESC, order_id DESC
+        LIMIT 5
+    ) o
+    LEFT JOIN MEMBER m ON m.member_id = o.member_id
+    ORDER BY o.ordered_at DESC, o.order_id DESC
+</select>
+
 </mapper>
