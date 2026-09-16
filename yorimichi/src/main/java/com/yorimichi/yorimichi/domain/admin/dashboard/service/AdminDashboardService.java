@@ -9,10 +9,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.LinkedHashMap;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+
+import com.yorimichi.yorimichi.domain.admin.dashboard.dto.DashboardOrderStatusResponseDto;
+import com.yorimichi.yorimichi.domain.admin.dashboard.dto.OrderStatusCountResponseDto;
 import com.yorimichi.yorimichi.domain.admin.dashboard.dto.DailySalesResponseDto;
 import com.yorimichi.yorimichi.domain.admin.dashboard.dto.DashboardSalesTrendResponseDto;
 import com.yorimichi.yorimichi.domain.admin.dashboard.dto.DashboardSummaryResponseDto;
@@ -106,6 +110,43 @@ public class AdminDashboardService {
                 dailySales
         );
     }
+    
+    public DashboardOrderStatusResponseDto getOrderStatus(Long memberId) {
+    validateAdmin(memberId);
+
+        LocalDate today = LocalDate.now(KOREA_ZONE);
+        LocalDateTime startUtc = toUtcDateTime(today);
+        LocalDateTime endUtc = toUtcDateTime(today.plusDays(1));
+
+        List<OrderStatusCountResponseDto> queryResults =
+                adminDashboardMapper.findOrderStatusCounts(startUtc, endUtc);
+
+        Map<String, Long> counts = new LinkedHashMap<>();
+        counts.put("PENDING", 0L);
+        counts.put("PAID", 0L);
+        counts.put("PREPARING", 0L);
+        counts.put("SHIPPING", 0L);
+        counts.put("DELIVERED", 0L);
+        counts.put("CANCELLED", 0L);
+
+        for (OrderStatusCountResponseDto row : queryResults) {
+            counts.merge(row.getStatus(), row.getCount(), Long::sum);
+        }
+
+        List<OrderStatusCountResponseDto> statuses = new ArrayList<>();
+        long totalCount = 0;
+
+        for (Map.Entry<String, Long> entry : counts.entrySet()) {
+            statuses.add(new OrderStatusCountResponseDto(
+                    entry.getKey(),
+                    entry.getValue()
+            ));
+            totalCount += entry.getValue();
+        }
+
+        return new DashboardOrderStatusResponseDto(totalCount, statuses);
+    }
+
 
     private void validateAdmin(Long memberId) {
         if (memberId == null) {
