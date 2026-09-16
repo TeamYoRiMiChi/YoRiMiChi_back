@@ -8,7 +8,7 @@ import org.apache.ibatis.annotations.Param;
 
 import com.yorimichi.yorimichi.domain.admin.dashboard.dto.DashboardSummaryResponseDto;
 import com.yorimichi.yorimichi.domain.admin.dashboard.dto.DailySalesResponseDto;
-
+import com.yorimichi.yorimichi.domain.admin.dashboard.dto.OrderStatusCountResponseDto;
 
 @Mapper
 public interface AdminDashboardMapper {
@@ -21,5 +21,10 @@ public interface AdminDashboardMapper {
     List<DailySalesResponseDto> findDailySales(
         @Param("startUtc") LocalDateTime startUtc,
         @Param("endUtc") LocalDateTime endUtc
+    );
+
+     List<OrderStatusCountResponseDto> findOrderStatusCounts(
+            @Param("startUtc") LocalDateTime startUtc,
+            @Param("endUtc") LocalDateTime endUtc
     );
 }

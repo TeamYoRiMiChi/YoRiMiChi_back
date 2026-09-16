@@ -10,6 +10,6 @@ import lombok.Getter;
 @AllArgsConstructor
 public class DashboardSalesTrendResponseDto {
 
-    private BigDecimal totalRevenue;
-    private List<DailySalesResponseDto> dailySales;
+    private final BigDecimal totalRevenue;
+    private final List<DailySalesResponseDto> dailySales;
 }

@@ -5,54 +5,37 @@
 
 <mapper namespace="com.yorimichi.yorimichi.domain.admin.dashboard.repository.AdminDashboardMapper">
 
-    <resultMap
-            id="dashboardSummaryResultMap"
-            type="com.yorimichi.yorimichi.domain.admin.dashboard.dto.DashboardSummaryResponseDto">
-
-        <result
-                property="todayOrderCount"
-                column="today_order_count"/>
-
-        <result
-                property="todayRevenue"
-                column="today_revenue"/>
-
-        <result
-                property="newMemberCount"
-                column="new_member_count"/>
-
-        <result
-                property="pendingOrderCount"
-                column="pending_order_count"/>
+    <resultMap id="dashboardSummaryResultMap"
+               type="com.yorimichi.yorimichi.domain.admin.dashboard.dto.DashboardSummaryResponseDto">
+        <result property="todayOrderCount" column="today_order_count"/>
+        <result property="todayRevenue" column="today_revenue"/>
+        <result property="newMemberCount" column="new_member_count"/>
+        <result property="pendingOrderCount" column="pending_order_count"/>
     </resultMap>
 
-    <select
-            id="findSummary"
-            resultMap="dashboardSummaryResultMap">
-
+    <select id="findSummary" resultMap="dashboardSummaryResultMap">
         SELECT
             (
                 SELECT COUNT(*)
                 FROM ORDERS o
                 WHERE o.ordered_at >= #{todayStartUtc}
-                  AND o.ordered_at < #{tomorrowStartUtc}
+                  AND o.ordered_at &lt; #{tomorrowStartUtc}
             ) AS today_order_count,
 
             (
                 SELECT COALESCE(SUM(p.amount), 0)
                 FROM PAYMENT p
-                INNER JOIN ORDERS o
-                    ON o.order_id = p.order_id
+                INNER JOIN ORDERS o ON o.order_id = p.order_id
                 WHERE p.payment_status = 'PAID'
                   AND o.ordered_at >= #{todayStartUtc}
-                  AND o.ordered_at < #{tomorrowStartUtc}
+                  AND o.ordered_at &lt; #{tomorrowStartUtc}
             ) AS today_revenue,
 
             (
                 SELECT COUNT(*)
                 FROM MEMBER m
                 WHERE m.created_at >= #{todayStartUtc}
-                  AND m.created_at < #{tomorrowStartUtc}
+                  AND m.created_at &lt; #{tomorrowStartUtc}
             ) AS new_member_count,
 
             (
@@ -60,7 +43,42 @@
                 FROM ORDERS o
                 WHERE o.order_status = 'PENDING'
             ) AS pending_order_count
+    </select>
 
+    <resultMap id="dailySalesResultMap"
+               type="com.yorimichi.yorimichi.domain.admin.dashboard.dto.DailySalesResponseDto">
+        <result property="salesDate" column="sales_date"/>
+        <result property="revenue" column="revenue"/>
+    </resultMap>
+
+    <select id="findDailySales" resultMap="dailySalesResultMap">
+        SELECT
+            DATE(CONVERT_TZ(o.ordered_at, '+00:00', '+09:00')) AS sales_date,
+            COALESCE(SUM(p.amount), 0) AS revenue
+        FROM ORDERS o
+        INNER JOIN PAYMENT p ON p.order_id = o.order_id
+        WHERE p.payment_status = 'PAID'
+          AND o.ordered_at >= #{startUtc}
+          AND o.ordered_at &lt; #{endUtc}
+        GROUP BY DATE(CONVERT_TZ(o.ordered_at, '+00:00', '+09:00'))
+        ORDER BY sales_date ASC
+    </select>
+
+    <resultMap id="orderStatusCountResultMap"
+               type="com.yorimichi.yorimichi.domain.admin.dashboard.dto.OrderStatusCountResponseDto">
+        <result property="status" column="status"/>
+        <result property="count" column="status_count"/>
+    </resultMap>
+
+    <select id="findOrderStatusCounts" resultMap="orderStatusCountResultMap">
+        SELECT
+            o.order_status AS status,
+            COUNT(*) AS status_count
+        FROM ORDERS o
+        WHERE o.ordered_at >= #{startUtc}
+          AND o.ordered_at &lt; #{endUtc}
+        GROUP BY o.order_status
+        ORDER BY o.order_status ASC
     </select>
 
 </mapper>
