@@ -23,10 +23,7 @@ public enum ErrorCode {
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "A002", "無効なトークンです。"),
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "A003", "トークンの有効期限が切れています。"),
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "A004", "ログインが必要です。"),
-    ADMIN_ACCESS_DENIED(
-        HttpStatus.FORBIDDEN,
-        "A005",
-        "管理者権限が必要です。")
+    ADMIN_ACCESS_DENIED(HttpStatus.FORBIDDEN, "A005","管理者権限が必要です。"),
 
     // Product
     PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "P001", "存在しない商品です。"),
