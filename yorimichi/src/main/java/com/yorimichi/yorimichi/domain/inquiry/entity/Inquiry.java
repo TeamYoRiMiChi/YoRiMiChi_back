@@ -15,6 +15,8 @@ public class Inquiry {
 
     private Long inquiryId;
     private Long memberId;
+    private String memberName;
+    private String email;
     private String category;
     private String title;
     private String content;
