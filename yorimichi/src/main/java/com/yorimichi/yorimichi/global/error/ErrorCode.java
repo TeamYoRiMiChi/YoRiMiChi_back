@@ -51,7 +51,11 @@ public enum ErrorCode {
     DUPLICATE_COUPON_CODE(HttpStatus.CONFLICT, "N002", "既に使用されているクーポンコードです。"),
     INVALID_COUPON_ISSUE_REQUEST(HttpStatus.BAD_REQUEST, "N003", "発給対象を指定してください。"),
     COUPON_USAGE_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "N004", "発給可能な残り数量を超えています。"),
-    INVALID_COUPON_STATUS_CHANGE(HttpStatus.CONFLICT, "N005", "現在の状態では変更できないクーポンです。");
+    INVALID_COUPON_STATUS_CHANGE(HttpStatus.CONFLICT, "N005", "現在の状態では変更できないクーポンです。"),
+    COUPON_ALREADY_CLAIMED(HttpStatus.CONFLICT, "N006", "既に受け取ったクーポンです。"),
+    COUPON_NOT_CLAIMABLE(HttpStatus.BAD_REQUEST, "N007", "受け取ることができないクーポンです。"),
+    COUPON_MIN_ORDER_AMOUNT_NOT_MET(HttpStatus.BAD_REQUEST, "N008", "最低注文金額に達していないクーポンです。"),
+    COUPON_NOT_USABLE(HttpStatus.CONFLICT, "N009", "使用できないクーポンです。");
 
     private final HttpStatus status;
     private final String code;

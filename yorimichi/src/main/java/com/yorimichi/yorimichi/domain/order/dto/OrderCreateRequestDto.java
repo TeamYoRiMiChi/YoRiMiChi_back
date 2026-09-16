@@ -66,6 +66,15 @@ public class OrderCreateRequestDto {
     private String personalCustomsCode;
 
 
+    /* ===== 쿠폰 ===== */
+
+    /**
+     * 이 주문에 사용할 보유 쿠폰(MEMBER_COUPON) id.
+     * null이면 쿠폰을 사용하지 않습니다.
+     */
+    private Long memberCouponId;
+
+
     /* ===== 결제 ===== */
 
     @NotBlank(message = "決済方法を選択してください。")
