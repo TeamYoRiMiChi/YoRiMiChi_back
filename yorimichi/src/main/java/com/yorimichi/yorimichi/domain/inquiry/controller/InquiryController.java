@@ -53,6 +53,15 @@ public class InquiryController {
         return ApiResponse.success(inquiryService.getMyInquiries(memberId));
     }
 
+    @PatchMapping("/{inquiryId}")
+    public ApiResponse<Void> updatePending(
+            @AuthenticationPrincipal Long memberId,
+            @PathVariable Long inquiryId,
+            @Valid @RequestBody InquiryCreateRequestDto request) {
+        inquiryService.updatePending(memberId, inquiryId, request);
+        return ApiResponse.success(null, "お問い合わせを修正しました。");
+    }
+
     @GetMapping("/admin")
     public ApiResponse<List<InquiryResponseDto>> getAll(
             @AuthenticationPrincipal Long memberId) {

@@ -54,6 +54,25 @@
         ORDER BY created_at DESC, inquiry_id DESC
     </select>
 
+    <select id="findById" resultMap="inquiryResultMap">
+        SELECT inquiry_id, member_id, category, title, content, status,
+               answer, answered_at, created_at, updated_at
+        FROM INQUIRY
+        WHERE inquiry_id = #{inquiryId}
+    </select>
+
+    <update id="updatePending">
+        UPDATE INQUIRY
+        SET category = #{category},
+            title = #{title},
+            content = #{content},
+            updated_at = NOW()
+        WHERE inquiry_id = #{inquiryId}
+          AND member_id = #{memberId}
+          AND status = 'WAITING'
+          AND answer IS NULL
+    </update>
+
     <select id="findAll" resultMap="inquiryResultMap">
         SELECT
             i.inquiry_id,
