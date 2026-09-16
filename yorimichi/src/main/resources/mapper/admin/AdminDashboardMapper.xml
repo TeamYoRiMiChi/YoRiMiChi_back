@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yorimichi.yorimichi.domain.admin.dashboard.repository.AdminDashboardMapper">
+
+    <resultMap
+            id="dashboardSummaryResultMap"
+            type="com.yorimichi.yorimichi.domain.admin.dashboard.dto.DashboardSummaryResponseDto">
+
+        <result
+                property="todayOrderCount"
+                column="today_order_count"/>
+
+        <result
+                property="todayRevenue"
+                column="today_revenue"/>
+
+        <result
+                property="newMemberCount"
+                column="new_member_count"/>
+
+        <result
+                property="pendingOrderCount"
+                column="pending_order_count"/>
+    </resultMap>
+
+    <select
+            id="findSummary"
+            resultMap="dashboardSummaryResultMap">
+
+        SELECT
+            (
+                SELECT COUNT(*)
+                FROM ORDERS o
+                WHERE o.ordered_at >= #{todayStartUtc}
+                  AND o.ordered_at < #{tomorrowStartUtc}
+            ) AS today_order_count,
+
+            (
+                SELECT COALESCE(SUM(p.amount), 0)
+                FROM PAYMENT p
+                INNER JOIN ORDERS o
+                    ON o.order_id = p.order_id
+                WHERE p.payment_status = 'PAID'
+                  AND o.ordered_at >= #{todayStartUtc}
+                  AND o.ordered_at < #{tomorrowStartUtc}
+            ) AS today_revenue,
+
+            (
+                SELECT COUNT(*)
+                FROM MEMBER m
+                WHERE m.created_at >= #{todayStartUtc}
+                  AND m.created_at < #{tomorrowStartUtc}
+            ) AS new_member_count,
+
+            (
+                SELECT COUNT(*)
+                FROM ORDERS o
+                WHERE o.order_status = 'PENDING'
+            ) AS pending_order_count
+
+    </select>
+
+</mapper>
