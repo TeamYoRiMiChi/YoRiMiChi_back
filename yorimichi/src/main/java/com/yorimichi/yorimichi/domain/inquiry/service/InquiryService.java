@@ -43,6 +43,28 @@ public class InquiryService {
                 .toList();
     }
 
+    @Transactional
+    public void updatePending(Long memberId, Long inquiryId, InquiryCreateRequestDto request) {
+        if (memberId == null) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
+        }
+        int updated = inquiryMapper.updatePending(
+                inquiryId, memberId, request.getCategory(),
+                request.getTitle().trim(), request.getContent().trim());
+        if (updated > 0) {
+            return;
+        }
+
+        Inquiry inquiry = inquiryMapper.findById(inquiryId);
+        if (inquiry == null) {
+            throw new CustomException(ErrorCode.INQUIRY_NOT_FOUND);
+        }
+        if (!memberId.equals(inquiry.getMemberId())) {
+            throw new CustomException(ErrorCode.INQUIRY_NOT_OWNER);
+        }
+        throw new CustomException(ErrorCode.INQUIRY_ALREADY_ANSWERED);
+    }
+
     @Transactional(readOnly = true)
     public List<InquiryResponseDto> getAll(Long memberId) {
         validateAdmin(memberId);
