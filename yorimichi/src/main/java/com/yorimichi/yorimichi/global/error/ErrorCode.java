@@ -36,6 +36,11 @@ public enum ErrorCode {
     CART_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "T001", "カートに該当する商品がありません。"),
     CART_EMPTY(HttpStatus.BAD_REQUEST, "T002", "カートに商品がありません。"),
 
+    // Inquiry
+    INQUIRY_NOT_FOUND(HttpStatus.NOT_FOUND, "I001", "お問い合わせが見つかりません。"),
+    INQUIRY_NOT_OWNER(HttpStatus.FORBIDDEN, "I002", "このお問い合わせは編集できません。"),
+    INQUIRY_ALREADY_ANSWERED(HttpStatus.CONFLICT, "I003", "回答済みのお問い合わせは編集できません。"),
+
     // Group buy
     GROUP_BUY_NOT_FOUND(HttpStatus.NOT_FOUND, "B001", "共同購入が見つかりません。"),
     GROUP_BUY_CLOSED(HttpStatus.CONFLICT, "B002", "この共同購入の募集は終了しています。"),
@@ -52,7 +57,11 @@ public enum ErrorCode {
     DUPLICATE_COUPON_CODE(HttpStatus.CONFLICT, "N002", "既に使用されているクーポンコードです。"),
     INVALID_COUPON_ISSUE_REQUEST(HttpStatus.BAD_REQUEST, "N003", "発給対象を指定してください。"),
     COUPON_USAGE_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "N004", "発給可能な残り数量を超えています。"),
-    INVALID_COUPON_STATUS_CHANGE(HttpStatus.CONFLICT, "N005", "現在の状態では変更できないクーポンです。");
+    INVALID_COUPON_STATUS_CHANGE(HttpStatus.CONFLICT, "N005", "現在の状態では変更できないクーポンです。"),
+    COUPON_ALREADY_CLAIMED(HttpStatus.CONFLICT, "N006", "既に受け取ったクーポンです。"),
+    COUPON_NOT_CLAIMABLE(HttpStatus.BAD_REQUEST, "N007", "受け取ることができないクーポンです。"),
+    COUPON_MIN_ORDER_AMOUNT_NOT_MET(HttpStatus.BAD_REQUEST, "N008", "最低注文金額に達していないクーポンです。"),
+    COUPON_NOT_USABLE(HttpStatus.CONFLICT, "N009", "使用できないクーポンです。");
 
     private final HttpStatus status;
     private final String code;

@@ -7,6 +7,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.yorimichi.yorimichi.domain.cart.entity.CartItem;
 import com.yorimichi.yorimichi.domain.cart.repository.CartMapper;
+import com.yorimichi.yorimichi.domain.mypage.dto.MyCouponResponseDto;
+import com.yorimichi.yorimichi.domain.mypage.repository.CouponMapper;
 import com.yorimichi.yorimichi.domain.order.dto.*;
 import com.yorimichi.yorimichi.domain.order.entity.Order;
 import com.yorimichi.yorimichi.domain.order.entity.OrderAddress;
@@ -31,6 +33,7 @@ public class OrderService {
     private final OrderMapper orderMapper;
     private final CartMapper cartMapper;
     private final ProductMapper productMapper;
+    private final CouponMapper couponMapper;
 
     /**
      * 주문서 데이터 조회
@@ -40,6 +43,8 @@ public class OrderService {
      *   - 장바구니 : productId가 null이면 담긴 상품 전체
      *
      * 실제 주문은 아직 만들지 않고 미리보기만 돌려줍니다.
+     * 쿠폰 할인은 여기서 계산하지 않습니다 — 어떤 쿠폰을 쓸지는 이 화면 이후에
+     * 사용자가 고르므로, 실제 반영은 주문 생성(createOrder) 시점에만 이뤄집니다.
      */
     @Transactional(readOnly = true)
     public OrderCheckoutResponseDto getCheckout(Long memberId, Long productId, Integer quantity,
@@ -80,11 +85,12 @@ public class OrderService {
      * 하나의 트랜잭션에서 다음을 처리합니다.
      *   1) 주문 대상 확인 (바로구매 또는 장바구니)
      *   2) 배송지 확정 (저장된 주소 또는 직접 입력)
-     *   3) 금액 재계산 (프론트가 보낸 값을 믿지 않음)
+     *   3) 금액 재계산 (프론트가 보낸 값을 믿지 않음) + 쿠폰 검증·할인 계산
      *   4) ORDERS · ORDER_ITEM 저장
-     *   5) PAYMENT · SHIPPING 생성
-     *   6) 재고 차감 · 판매량 증가
-     *   7) 장바구니 주문이면 장바구니 비우기
+     *   5) 쿠폰을 썼다면 MEMBER_COUPON을 사용 처리 (이 주문에 묶어 이력을 남김)
+     *   6) PAYMENT · SHIPPING 생성
+     *   7) 재고 차감 · 판매량 증가
+     *   8) 장바구니 주문이면 장바구니 비우기
      *
      * 중간에 하나라도 실패하면 전부 되돌아갑니다.
      */
@@ -111,6 +117,23 @@ public class OrderService {
 
         Amounts amounts = calculate(items);
 
+        /* 3-1) 쿠폰 검증 + 할인 계산. 쿠폰을 쓰지 않으면 appliedCoupon은 null, 할인은 0원입니다. */
+        MyCouponResponseDto appliedCoupon =
+                resolveCoupon(memberId, request.getMemberCouponId(), amounts.productAmount);
+
+        BigDecimal couponDiscount = appliedCoupon != null
+                ? OrderCalculator.couponDiscount(
+                        appliedCoupon.getDiscountType(),
+                        appliedCoupon.getDiscountValue(),
+                        appliedCoupon.getMaxDiscountAmount(),
+                        amounts.productAmount)
+                : BigDecimal.ZERO;
+
+        BigDecimal finalTotal = amounts.total.subtract(couponDiscount);
+        if (finalTotal.compareTo(BigDecimal.ZERO) < 0) {
+            finalTotal = BigDecimal.ZERO;
+        }
+
         /* 4) 주문 저장 */
         Order order = Order.builder()
                 .memberId(memberId)
@@ -126,11 +149,23 @@ public class OrderService {
                 .productAmount(amounts.productAmount)
                 .shippingFee(amounts.overseasShipping.add(amounts.domesticShipping))
                 .customsDuty(amounts.customsDuty)
-                .totalAmount(amounts.total)
+                .totalAmount(finalTotal)
                 .orderStatus("PENDING")
                 .build();
 
         orderMapper.insertOrder(order);
+
+        /*
+         * 4-1) 쿠폰 사용 처리.
+         * WHERE status = 'AVAILABLE' 조건으로 갱신하므로, 검증 이후 동시에 다른 주문에서
+         * 먼저 같은 쿠폰을 써버린 경우 0건이 갱신됩니다 — 그러면 트랜잭션 전체를 되돌립니다.
+         */
+        if (appliedCoupon != null) {
+            int marked = couponMapper.markCouponUsed(appliedCoupon.getMemberCouponId(), order.getOrderId());
+            if (marked == 0) {
+                throw new CustomException(ErrorCode.COUPON_NOT_USABLE);
+            }
+        }
 
         /* 5) 주문 상품 저장 + 재고 차감 */
         for (OrderCheckoutItemDto item : items) {
@@ -151,8 +186,8 @@ public class OrderService {
             }
         }
 
-        /* 6) 결제·배송 정보 생성 */
-        orderMapper.insertPayment(order.getOrderId(), request.getPaymentMethod(), amounts.total);
+        /* 6) 결제·배송 정보 생성 (쿠폰 할인이 반영된 최종 금액으로 결제 생성) */
+        orderMapper.insertPayment(order.getOrderId(), request.getPaymentMethod(), finalTotal);
         orderMapper.insertShipping(order.getOrderId());
 
         /* 7) 주문한 장바구니 항목만 삭제합니다. 품절 상품과 다른 판매 방식은 남깁니다. */
@@ -160,8 +195,8 @@ public class OrderService {
             orderedCartItems.forEach(item -> cartMapper.deleteItem(item.getCartItemId()));
         }
 
-        log.info("order created - orderNumber={}, memberId={}, direct={}, total={}",
-                order.getOrderNumber(), memberId, request.isDirectPurchase(), amounts.total);
+        log.info("order created - orderNumber={}, memberId={}, direct={}, couponDiscount={}, total={}",
+                order.getOrderNumber(), memberId, request.isDirectPurchase(), couponDiscount, finalTotal);
 
         List<OrderLine> savedLines = orderMapper.findItemsByOrderId(order.getOrderId());
         return new OrderResponseDto(order, savedLines);
@@ -321,6 +356,33 @@ public class OrderService {
         String code = input.trim().toUpperCase();
         orderMapper.updateCustomsCode(memberId, code);
         return code;
+    }
+
+    /**
+     * 쿠폰 검증.
+     *
+     * memberCouponId가 없으면 쿠폰을 쓰지 않는 주문이라 null을 돌려줍니다.
+     * 있으면 실제로 이 회원 것이 맞는지, 지금 쓸 수 있는 상태(AVAILABLE)인지,
+     * 최소 주문 금액을 채웠는지까지 확인합니다.
+     * (프론트에서도 이미 걸러서 보내지만, 요청을 조작해 보낼 수 있으므로 서버에서 다시 검증합니다)
+     */
+    private MyCouponResponseDto resolveCoupon(Long memberId, Long memberCouponId, BigDecimal productAmount) {
+        if (memberCouponId == null) {
+            return null;
+        }
+
+        MyCouponResponseDto coupon = couponMapper.findMyCouponById(memberCouponId, memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.COUPON_NOT_FOUND));
+
+        if (!"AVAILABLE".equals(coupon.getStatus())) {
+            throw new CustomException(ErrorCode.COUPON_NOT_USABLE);
+        }
+
+        if (productAmount.compareTo(coupon.getMinOrderAmount()) < 0) {
+            throw new CustomException(ErrorCode.COUPON_MIN_ORDER_AMOUNT_NOT_MET);
+        }
+
+        return coupon;
     }
 
     /** 최신 환율. 없으면 기본값 */

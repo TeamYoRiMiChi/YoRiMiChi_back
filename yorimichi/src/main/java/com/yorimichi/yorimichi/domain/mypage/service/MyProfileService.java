@@ -2,6 +2,7 @@ package com.yorimichi.yorimichi.domain.mypage.service;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.yorimichi.yorimichi.domain.mypage.dto.ProfileResponseDto;
 import com.yorimichi.yorimichi.domain.mypage.dto.ProfileUpdateRequestDto;
@@ -53,4 +54,13 @@ public class MyProfileService {
 
 		return new ProfileResponseDto(updatedUser);
 	}
+	
+	@Transactional
+	public void withdrawMember(Long memberId) {
+		int updatedCount = myProfileMapper.withdrawMember(memberId);
+		if (updatedCount == 0) {
+			throw new CustomException(ErrorCode.WITHDRAWN_MEMBER);
+		}
+	}
+	
 }
