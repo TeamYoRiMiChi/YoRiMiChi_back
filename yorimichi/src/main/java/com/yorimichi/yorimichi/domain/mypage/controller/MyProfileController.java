@@ -48,4 +48,19 @@ public class MyProfileController {
 		);
 	}
 	
+	@PatchMapping("/withdrawal")
+	public ApiResponse<Void> withdrawMember(
+	        @AuthenticationPrincipal Long memberId
+	) {
+	    if (memberId == null) {
+	        throw new CustomException(ErrorCode.UNAUTHORIZED);
+	    }
+
+	    myProfileService.withdrawMember(memberId);
+
+	    return ApiResponse.<Void>success(
+	            null,
+	            "退会処理が完了しました。"
+	    );
+	}
 }

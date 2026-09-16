@@ -17,4 +17,6 @@ public interface MyProfileMapper {
 			@Param("phone") String phone,
 			@Param("encodedPassword") String encodedPassword
 	);
+	
+	int withdrawMember(@Param("memberId") Long memberId);
 }
