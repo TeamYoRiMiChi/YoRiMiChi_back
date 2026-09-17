@@ -65,5 +65,27 @@ public interface ProductMapper {
 	);
 	
 	
+	//관리자 상품 목록 조회
+	List<Product> findAdminAll(
+	        @Param("saleType") String saleType,
+	        @Param("categoryId") Long categoryId,
+	        @Param("keyword") String keyword,
+	        @Param("status") String status,
+	        @Param("offset") int offset,
+	        @Param("size") int size
+	);
+
+	// 관리자 상품 전체 개수
+	long countAdminAll(
+	        @Param("saleType") String saleType,
+	        @Param("categoryId") Long categoryId,
+	        @Param("keyword") String keyword,
+	        @Param("status") String status
+	);
+	
+	
+	
+	
+	
 	
 }

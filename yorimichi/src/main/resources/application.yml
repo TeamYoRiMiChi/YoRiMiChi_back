@@ -6,8 +6,8 @@ spring:
     name: yorimichi
 
   profiles:
-    active: local
-#local
+    active: rds
+#rds
 
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect

@@ -1,43 +1,60 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.yorimichi.yorimichi.domain.product.repository.ProductMapper">
 
-    <resultMap id="productResultMap" type="com.yorimichi.yorimichi.domain.product.entity.Product">
-        <id     property="productId"        column="product_id"/>
-        <result property="categoryId"       column="category_id"/>
-        <result property="saleType"         column="sale_type"/>
-        <result property="brand"            column="brand"/>
-        <result property="productName"      column="product_name"/>
-        <result property="productNameJp"    column="product_name_jp"/>
-        <result property="description"      column="description"/>
-        <result property="priceJpy"         column="price_jpy"/>
+    <!-- DB 컬럼과 Product 엔티티 연결 -->
+    <resultMap id="productResultMap"
+               type="com.yorimichi.yorimichi.domain.product.entity.Product">
+
+        <id property="productId" column="product_id"/>
+
+        <result property="categoryId" column="category_id"/>
+        <result property="saleType" column="sale_type"/>
+        <result property="brand" column="brand"/>
+        <result property="productName" column="product_name"/>
+        <result property="productNameJp" column="product_name_jp"/>
+        <result property="description" column="description"/>
+        <result property="priceJpy" column="price_jpy"/>
         <result property="originalPriceJpy" column="original_price_jpy"/>
-        <result property="stock"            column="stock"/>
-        <result property="salesCount"       column="sales_count"/>
-        <result property="weight"           column="weight"/>
-        <result property="originalUrl"      column="original_url"/>
-        <result property="thumbnailUrl"     column="thumbnail_url"/>
-        <result property="status"           column="status"/>
-        <result property="createdAt"        column="created_at"/>
-        <result property="updatedAt"        column="updated_at"/>
+        <result property="stock" column="stock"/>
+        <result property="salesCount" column="sales_count"/>
+        <result property="weight" column="weight"/>
+        <result property="originalUrl" column="original_url"/>
+        <result property="thumbnailUrl" column="thumbnail_url"/>
+        <result property="status" column="status"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+
     </resultMap>
 
 
+    <!-- PRODUCT 공통 컬럼 -->
     <sql id="productColumns">
-        product_id, category_id, sale_type, brand, product_name, product_name_jp, description,
-        price_jpy, original_price_jpy, stock, sales_count, weight,
-        original_url, thumbnail_url, status, created_at, updated_at
+        product_id,
+        category_id,
+        sale_type,
+        brand,
+        product_name,
+        product_name_jp,
+        description,
+        price_jpy,
+        original_price_jpy,
+        stock,
+        sales_count,
+        weight,
+        original_url,
+        thumbnail_url,
+        status,
+        created_at,
+        updated_at
     </sql>
 
 
-    <!--
-      목록·개수 조회에 공통으로 쓰이는 조건절.
-      한 곳에만 두면 조건이 바뀔 때 한 번만 고치면 됩니다.
-
-      saleType으로 해외직구(OVERSEAS)와 공동구매(GROUP_BUY) 상품을 나눕니다.
-      null이면 구분 없이 전체를 봅니다.
-    -->
+    <!-- 일반 상품 검색 조건 -->
     <sql id="searchConditions">
         <where>
             status = 'ACTIVE'
@@ -52,117 +69,154 @@
 
             <if test="keyword != null and keyword != ''">
                 AND (
-                    product_name    LIKE CONCAT('%', #{keyword}, '%')
-                 OR product_name_jp LIKE CONCAT('%', #{keyword}, '%')
-                 OR brand           LIKE CONCAT('%', #{keyword}, '%')
+                    product_name LIKE CONCAT('%', #{keyword}, '%')
+                    OR product_name_jp LIKE CONCAT('%', #{keyword}, '%')
+                    OR brand LIKE CONCAT('%', #{keyword}, '%')
                 )
             </if>
         </where>
     </sql>
 
 
-    <!-- 상품 목록 -->
+    <!-- 일반 상품 목록 -->
     <select id="findAll" resultMap="productResultMap">
-        SELECT <include refid="productColumns"/>
+
+        SELECT
+            <include refid="productColumns"/>
+
         FROM PRODUCT
+
         <include refid="searchConditions"/>
 
         <choose>
             <when test="sort == 'popular'">
                 ORDER BY sales_count DESC, product_id DESC
             </when>
+
             <when test="sort == 'newest'">
                 ORDER BY created_at DESC, product_id DESC
             </when>
+
             <otherwise>
-                <!-- recommend(기본): 등록 순서 -->
                 ORDER BY product_id ASC
             </otherwise>
         </choose>
 
         LIMIT #{size} OFFSET #{offset}
+
     </select>
 
 
-    <!-- 전체 개수 (페이지 수 계산용) -->
+    <!-- 일반 상품 전체 개수 -->
     <select id="countAll" resultType="long">
+
         SELECT COUNT(*)
+
         FROM PRODUCT
+
         <include refid="searchConditions"/>
+
     </select>
 
 
-	
-    <!-- 공동구매 상품 검색 조건 -->
-    <sql id="groupBuySearchConditions">
-        <where>
-            p.sale_type = 'GROUP_BUY'
-            AND p.status = 'ACTIVE'
-
-            <choose>
-                <when test="status == 'RECRUITING'">
-                    AND gb.status = 'RECRUITING'
-                    AND gb.current_quantity &lt; gb.target_quantity
-                    AND gb.start_date &lt;= CURRENT_TIMESTAMP
-                    AND gb.end_date &gt; CURRENT_TIMESTAMP
-                </when>
-                <when test="status == 'CLOSING_SOON'">
-                    AND gb.status = 'RECRUITING'
-                    AND gb.current_quantity &lt; gb.target_quantity
-                    AND gb.end_date &gt; CURRENT_TIMESTAMP
-                    AND gb.end_date &lt;= DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 3 DAY)
-                </when>
-                <when test="status == 'COMPLETED'">
-                    AND (
-                        gb.status IN ('SUCCESS', 'FAILED', 'CANCELLED')
-                        OR gb.current_quantity &gt;= gb.target_quantity
-                        OR gb.end_date &lt;= CURRENT_TIMESTAMP
-                    )
-                </when>
-            </choose>
-
-            <if test="categoryId != null">
-                AND p.category_id = #{categoryId}
-            </if>
-
-            <if test="keyword != null and keyword != ''">
-                AND (
-                    p.product_name LIKE CONCAT('%', #{keyword}, '%')
-                    OR p.product_name_jp LIKE CONCAT('%', #{keyword}, '%')
-                    OR p.brand LIKE CONCAT('%', #{keyword}, '%')
-                )
-            </if>
-        </where>
-    </sql>
-
-    <!-- 상품은 유지하고, 연결된 모집 중 화면에 사용할 한 건만 붙입니다. -->
+    <!-- 상품별 가장 최근 공동구매 연결 -->
     <sql id="currentGroupBuyLeftJoin">
-        LEFT JOIN GROUP_BUY gb ON gb.group_buy_id = (
-            SELECT gb2.group_buy_id
-            FROM GROUP_BUY gb2
-            WHERE gb2.product_id = p.product_id
-            ORDER BY gb2.group_buy_id DESC
-            LIMIT 1
-        )
+
+        LEFT JOIN GROUP_BUY gb
+            ON gb.group_buy_id = (
+                SELECT gb2.group_buy_id
+                FROM GROUP_BUY gb2
+                WHERE gb2.product_id = p.product_id
+                ORDER BY gb2.group_buy_id DESC
+                LIMIT 1
+            )
+
     </sql>
 
 
-    <!-- 공동구매 상태별 목록 -->
+   <!-- 공동구매 상품 검색 조건 -->
+<sql id="groupBuySearchConditions">
+    <where>
+        p.sale_type = 'GROUP_BUY'
+        AND p.status = 'ACTIVE'
+
+        <choose>
+            <when test="status == 'RECRUITING'">
+                AND gb.status = 'RECRUITING'
+            </when>
+
+            <when test="status == 'CLOSING_SOON'">
+                AND gb.status = 'RECRUITING'
+                AND gb.end_date &gt; CURRENT_TIMESTAMP
+                AND gb.end_date &lt;= DATE_ADD(
+                    CURRENT_TIMESTAMP,
+                    INTERVAL 3 DAY
+                )
+            </when>
+
+            <when test="status == 'COMPLETED'">
+                AND gb.status = 'SUCCESS'
+            </when>
+
+            <otherwise>
+                AND gb.status IN ('RECRUITING', 'SUCCESS')
+            </otherwise>
+        </choose>
+
+        <if test="categoryId != null">
+            AND p.category_id = #{categoryId}
+        </if>
+
+        <if test="keyword != null and keyword != ''">
+            AND (
+                p.product_name LIKE CONCAT('%', #{keyword}, '%')
+                OR p.product_name_jp LIKE CONCAT('%', #{keyword}, '%')
+                OR p.brand LIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+    </where>
+</sql>
+
+    <!-- 공동구매 상품 목록 -->
     <select id="findGroupBuyAll" resultMap="productResultMap">
-        SELECT p.product_id, p.category_id, p.sale_type, p.brand,
-               p.product_name, p.product_name_jp, p.description,
-               p.price_jpy, p.original_price_jpy, p.stock, p.sales_count,
-               p.weight, p.original_url, p.thumbnail_url,
-               CASE
-                   WHEN gb.group_buy_id IS NULL THEN p.status
-                   WHEN gb.status IN ('SUCCESS', 'FAILED', 'CANCELLED') THEN gb.status
-                   WHEN gb.current_quantity &gt;= gb.target_quantity THEN 'SUCCESS'
-                   WHEN gb.end_date &lt;= CURRENT_TIMESTAMP THEN 'FAILED'
-                   WHEN gb.end_date &lt;= DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 3 DAY) THEN 'CLOSING_SOON'
-                   ELSE gb.status
-               END AS status,
-               p.created_at, p.updated_at
+
+        SELECT
+            p.product_id,
+            p.category_id,
+            p.sale_type,
+            p.brand,
+            p.product_name,
+            p.product_name_jp,
+            p.description,
+            p.price_jpy,
+            p.original_price_jpy,
+            p.stock,
+            p.sales_count,
+            p.weight,
+            p.original_url,
+            p.thumbnail_url,
+            CASE
+    WHEN gb.status = 'SUCCESS'
+        THEN 'SUCCESS'
+
+    WHEN gb.status = 'RECRUITING'
+         AND gb.end_date &gt; CURRENT_TIMESTAMP
+         AND gb.end_date &lt;= DATE_ADD(
+             CURRENT_TIMESTAMP,
+             INTERVAL 3 DAY
+         )
+        THEN 'CLOSING_SOON'
+
+    WHEN gb.status = 'RECRUITING'
+        THEN 'ACTIVE'
+
+    ELSE gb.status
+END AS status,
+            p.created_at,
+            p.updated_at
+
         FROM PRODUCT p
+
         <include refid="currentGroupBuyLeftJoin"/>
 
         <include refid="groupBuySearchConditions"/>
@@ -173,7 +227,9 @@
             </when>
 
             <when test="sort == 'newest'">
-                ORDER BY COALESCE(gb.created_at, p.created_at) DESC, p.product_id DESC
+                ORDER BY
+                    COALESCE(gb.created_at, p.created_at) DESC,
+                    p.product_id DESC
             </when>
 
             <when test="sort == 'priceAsc'">
@@ -186,27 +242,34 @@
         </choose>
 
         LIMIT #{size} OFFSET #{offset}
+
     </select>
 
 
-    <!-- 공동구매 상태별 전체 개수 -->
+    <!-- 공동구매 상품 전체 개수 -->
     <select id="countGroupBuyAll" resultType="long">
+
         SELECT COUNT(*)
+
         FROM PRODUCT p
+
         <include refid="currentGroupBuyLeftJoin"/>
 
         <include refid="groupBuySearchConditions"/>
+
     </select>
 
-    <!-- 상품 단건 -->
+
+    <!-- 상품 단건 조회 -->
     <select id="findById" resultMap="productResultMap">
-        SELECT <include refid="productColumns"/>
+
+        SELECT
+            <include refid="productColumns"/>
+
         FROM PRODUCT
+
         WHERE product_id = #{productId}
+
     </select>
-    
-    
-    
-    
 
 </mapper>
