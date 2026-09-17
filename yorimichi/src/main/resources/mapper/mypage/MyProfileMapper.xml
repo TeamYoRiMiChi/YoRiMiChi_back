@@ -27,5 +27,14 @@
     	</set>
     	WHERE member_id = #{memberId}
     </update>
-
+	
+	<update id="withdrawMember">
+		UPDATE MEMBER
+		SET
+			status = 'INACTIVE',
+			withdrawn_at = CURRENT_TIMESTAMP,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE member_id = #{memberId}
+			AND status = 'ACTIVE'
+	</update>
 </mapper>

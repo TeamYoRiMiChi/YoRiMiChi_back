@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yorimichi.yorimichi.domain.admin.coupon.repository.AdminCouponMapper">
+
+    <resultMap id="couponResultMap" type="com.yorimichi.yorimichi.domain.admin.coupon.entity.Coupon">
+        <id     property="couponId"          column="coupon_id"/>
+        <result property="couponCode"        column="coupon_code"/>
+        <result property="couponName"        column="coupon_name"/>
+        <result property="discountType"      column="discount_type"/>
+        <result property="discountValue"     column="discount_value"/>
+        <result property="minOrderAmount"    column="min_order_amount"/>
+        <result property="maxDiscountAmount" column="max_discount_amount"/>
+        <result property="issueType"         column="issue_type"/>
+        <result property="validFrom"         column="valid_from"/>
+        <result property="validTo"           column="valid_to"/>
+        <result property="usageLimit"        column="usage_limit"/>
+        <result property="issuedCount"       column="issued_count"/>
+        <result property="status"            column="status"/>
+        <result property="createdAt"         column="created_at"/>
+        <result property="updatedAt"         column="updated_at"/>
+    </resultMap>
+
+
+    <resultMap id="memberCouponResultMap"
+               type="com.yorimichi.yorimichi.domain.admin.coupon.dto.AdminMemberCouponResponseDto">
+        <id     property="memberCouponId" column="member_coupon_id"/>
+        <result property="couponId"       column="coupon_id"/>
+        <result property="couponName"     column="coupon_name"/>
+        <result property="couponCode"     column="coupon_code"/>
+        <result property="memberId"       column="member_id"/>
+        <result property="memberEmail"    column="member_email"/>
+        <result property="memberName"     column="member_name"/>
+        <result property="orderId"        column="order_id"/>
+        <result property="issuedAt"       column="issued_at"/>
+        <result property="usedAt"         column="used_at"/>
+        <result property="status"         column="status"/>
+    </resultMap>
+
+
+    <sql id="couponColumns">
+        coupon_id, coupon_code, coupon_name, discount_type, discount_value,
+        min_order_amount, max_discount_amount, issue_type, valid_from, valid_to,
+        usage_limit, issued_count, status, created_at, updated_at
+    </sql>
+
+
+    <!-- 쿠폰 목록·개수 조회에 공통으로 쓰이는 조건절 -->
+    <sql id="couponSearchConditions">
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (
+                    coupon_name LIKE CONCAT('%', #{keyword}, '%')
+                 OR coupon_code LIKE CONCAT('%', #{keyword}, '%')
+                )
+            </if>
+
+            <if test="discountType != null and discountType != ''">
+                AND discount_type = #{discountType}
+            </if>
+
+            <if test="status != null and status != ''">
+                AND status = #{status}
+            </if>
+        </where>
+    </sql>
+
+
+    <!-- 쿠폰 목록 -->
+    <select id="findAll" resultMap="couponResultMap">
+        SELECT <include refid="couponColumns"/>
+        FROM COUPON
+        <include refid="couponSearchConditions"/>
+        ORDER BY created_at DESC, coupon_id DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+
+    <!-- 쿠폰 전체 개수 (페이지 수 계산용) -->
+    <select id="countAll" resultType="long">
+        SELECT COUNT(*)
+        FROM COUPON
+        <include refid="couponSearchConditions"/>
+    </select>
+
+
+    <!-- 쿠폰 단건 -->
+    <select id="findById" resultMap="couponResultMap">
+        SELECT <include refid="couponColumns"/>
+        FROM COUPON
+        WHERE coupon_id = #{couponId}
+    </select>
+
+
+    <!-- 쿠폰 코드 중복 여부 -->
+    <select id="existsByCouponCode" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1 FROM COUPON WHERE coupon_code = #{couponCode}
+        )
+    </select>
+
+
+    <!-- 쿠폰 등록 -->
+    <insert id="insertCoupon" useGeneratedKeys="true" keyProperty="couponId" keyColumn="coupon_id">
+        INSERT INTO COUPON (
+            coupon_code, coupon_name, discount_type, discount_value,
+            min_order_amount, max_discount_amount, issue_type,
+            valid_from, valid_to, usage_limit, issued_count, status
+        ) VALUES (
+            #{couponCode}, #{couponName}, #{discountType}, #{discountValue},
+            #{minOrderAmount}, #{maxDiscountAmount}, #{issueType},
+            #{validFrom}, #{validTo}, #{usageLimit}, #{issuedCount}, #{status}
+        )
+    </insert>
+
+
+    <!-- 발급 수량(issued_count) 누적 -->
+    <update id="increaseIssuedCount">
+        UPDATE COUPON
+        SET issued_count = issued_count + #{amount}
+        WHERE coupon_id = #{couponId}
+    </update>
+
+
+    <!-- 쿠폰 상태 변경 (중지 등). 실제 삭제 대신 status만 바꿔 발급 이력을 보존합니다. -->
+    <update id="updateStatus">
+        UPDATE COUPON
+        SET status = #{status}
+        WHERE coupon_id = #{couponId}
+    </update>
+
+
+    <!--
+      요약 통계.
+      COUPON과 MEMBER_COUPON 두 테이블을 함께 보므로 서브쿼리 5개를 한 행으로 모읍니다.
+      activeCoupons : status가 ACTIVE이면서 아직 유효기간이 지나지 않은 쿠폰
+      expiredCoupons: status가 EXPIRED이거나(STOPPED 제외) 유효기간이 지난 쿠폰
+      stoppedCoupons: status가 STOPPED인 쿠폰 (운영자가 중지, 유효기간과 무관하게 항상 이 값으로 집계)
+      -> STOPPED는 expiredCoupons와 stoppedCoupons에 중복 집계되지 않도록 expiredCoupons에서 제외합니다.
+    -->
+    <select id="getCouponSummary"
+            resultType="com.yorimichi.yorimichi.domain.admin.coupon.dto.AdminCouponSummaryResponseDto">
+        SELECT
+            (SELECT COUNT(*) FROM COUPON) AS totalCoupons,
+            (SELECT COUNT(*) FROM COUPON
+              WHERE status = 'ACTIVE' AND valid_to >= NOW()) AS activeCoupons,
+            (SELECT COUNT(*) FROM COUPON
+              WHERE status &lt;&gt; 'STOPPED'
+                AND (status = 'EXPIRED' OR valid_to &lt; NOW())) AS expiredCoupons,
+            (SELECT COUNT(*) FROM COUPON
+              WHERE status = 'STOPPED') AS stoppedCoupons,
+            (SELECT COUNT(*) FROM MEMBER_COUPON) AS issuedMemberCoupons
+    </select>
+
+
+    <!--
+      회원쿠폰의 "실질 상태".
+      MEMBER_COUPON.status는 USED로 바뀌는 것 말고는 발급 시점의 AVAILABLE로 계속 남아있고,
+      쿠폰 유효기간(valid_to)이 지났다고 자동으로 EXPIRED로 갱신되는 배치가 없습니다.
+      그래서 조회 시점에 "AVAILABLE인데 유효기간이 지났으면 EXPIRED로 간주"해서 계산해줍니다.
+    -->
+    <sql id="memberCouponEffectiveStatus">
+        CASE
+            WHEN mc.status = 'AVAILABLE' AND c.valid_to &lt; NOW() THEN 'EXPIRED'
+            ELSE mc.status
+        END
+    </sql>
+
+
+    <!-- 회원쿠폰(발급 내역) 목록·개수 조회에 공통으로 쓰이는 조건절 -->
+    <sql id="memberCouponSearchConditions">
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (
+                    m.email       LIKE CONCAT('%', #{keyword}, '%')
+                 OR m.name        LIKE CONCAT('%', #{keyword}, '%')
+                 OR c.coupon_name LIKE CONCAT('%', #{keyword}, '%')
+                 OR c.coupon_code LIKE CONCAT('%', #{keyword}, '%')
+                )
+            </if>
+
+            <if test="status != null and status != ''">
+                AND <include refid="memberCouponEffectiveStatus"/> = #{status}
+            </if>
+        </where>
+    </sql>
+
+
+    <!-- 회원쿠폰(발급 내역) 목록. 화면에 쿠폰명·회원 이메일까지 함께 보여주기 위해 조인합니다. -->
+    <select id="findMemberCoupons" resultMap="memberCouponResultMap">
+        SELECT mc.member_coupon_id, mc.coupon_id, c.coupon_name, c.coupon_code,
+               mc.member_id, m.email AS member_email, m.name AS member_name,
+               mc.order_id, mc.issued_at, mc.used_at,
+               <include refid="memberCouponEffectiveStatus"/> AS status
+        FROM MEMBER_COUPON mc
+        JOIN COUPON c ON c.coupon_id = mc.coupon_id
+        JOIN MEMBER m ON m.member_id = mc.member_id
+        <include refid="memberCouponSearchConditions"/>
+        ORDER BY mc.issued_at DESC, mc.member_coupon_id DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+
+    <!-- 회원쿠폰(발급 내역) 전체 개수 -->
+    <select id="countMemberCoupons" resultType="long">
+        SELECT COUNT(*)
+        FROM MEMBER_COUPON mc
+        JOIN COUPON c ON c.coupon_id = mc.coupon_id
+        JOIN MEMBER m ON m.member_id = mc.member_id
+        <include refid="memberCouponSearchConditions"/>
+    </select>
+
+
+    <!--
+      지정한 이메일 중 실제 발급 대상(활동 회원 + 아직 미발급)이 되는 인원 수.
+      usageLimit이 있는 쿠폰에서 발급 전 남은 수량 초과 여부를 확인하는 용도입니다.
+    -->
+    <select id="countEligibleEmails" resultType="long">
+        SELECT COUNT(*)
+        FROM MEMBER m
+        WHERE m.status = 'ACTIVE'
+          AND m.email IN
+          <foreach collection="emails" item="email" open="(" separator="," close=")">
+              #{email}
+          </foreach>
+          AND NOT EXISTS (
+              SELECT 1 FROM MEMBER_COUPON mc
+              WHERE mc.coupon_id = #{couponId} AND mc.member_id = m.member_id
+          )
+    </select>
+
+
+    <!--
+      활동 중인 전체 회원 중 실제 발급 대상(아직 미발급)이 되는 인원 수.
+      usageLimit이 있는 쿠폰에서 전체 회원 발급 전 남은 수량 초과 여부를 확인하는 용도입니다.
+    -->
+    <select id="countEligibleAllMembers" resultType="long">
+        SELECT COUNT(*)
+        FROM MEMBER m
+        WHERE m.status = 'ACTIVE'
+          AND NOT EXISTS (
+              SELECT 1 FROM MEMBER_COUPON mc
+              WHERE mc.coupon_id = #{couponId} AND mc.member_id = m.member_id
+          )
+    </select>
+
+
+    <!--
+      지정한 이메일의 활동 회원에게 쿠폰 발급.
+      NOT EXISTS로 이미 발급받은 회원은 걸러 중복 발급을 막습니다.
+      (usageLimit 초과 여부는 발급 전에 countEligibleEmails로 미리 확인하므로 여기선 별도 제한을 두지 않습니다)
+    -->
+    <insert id="issueToEmails">
+        INSERT INTO MEMBER_COUPON (coupon_id, member_id)
+        SELECT #{couponId}, m.member_id
+        FROM MEMBER m
+        WHERE m.status = 'ACTIVE'
+          AND m.email IN
+          <foreach collection="emails" item="email" open="(" separator="," close=")">
+              #{email}
+          </foreach>
+          AND NOT EXISTS (
+              SELECT 1 FROM MEMBER_COUPON mc
+              WHERE mc.coupon_id = #{couponId} AND mc.member_id = m.member_id
+          )
+    </insert>
+
+
+    <!--
+      활동 중인 전체 회원에게 쿠폰 발급 (이미 발급받은 회원은 제외).
+      (usageLimit 초과 여부는 발급 전에 countEligibleAllMembers로 미리 확인하므로 여기선 별도 제한을 두지 않습니다)
+    -->
+    <insert id="issueToAllMembers">
+        INSERT INTO MEMBER_COUPON (coupon_id, member_id)
+        SELECT #{couponId}, m.member_id
+        FROM MEMBER m
+        WHERE m.status = 'ACTIVE'
+          AND NOT EXISTS (
+              SELECT 1 FROM MEMBER_COUPON mc
+              WHERE mc.coupon_id = #{couponId} AND mc.member_id = m.member_id
+          )
+    </insert>
+
+</mapper>

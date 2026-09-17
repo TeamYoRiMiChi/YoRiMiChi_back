@@ -65,4 +65,35 @@ public final class OrderCalculator {
                 .multiply(CUSTOMS_RATE)
                 .setScale(0, RoundingMode.HALF_UP);
     }
+
+    /**
+     * 쿠폰 할인 금액.
+     *
+     * FIXED면 정액, PERCENT면 상품 금액에 비율을 곱하고 maxDiscountAmount로 상한을 둡니다
+     * (maxDiscountAmount가 null이거나 0이면 상한 없음).
+     * 상품 금액을 넘거나 음수가 되지 않도록 [0, productAmount] 범위로 자릅니다.
+     *
+     * 화면(useOrder.js의 calcCouponDiscount)과 같은 규칙입니다.
+     */
+    public static BigDecimal couponDiscount(String discountType, BigDecimal discountValue,
+                                             BigDecimal maxDiscountAmount, BigDecimal productAmount) {
+        if (discountValue == null || productAmount == null) {
+            return BigDecimal.ZERO;
+        }
+
+        BigDecimal discount;
+        if ("PERCENT".equals(discountType)) {
+            discount = productAmount.multiply(discountValue)
+                    .divide(BigDecimal.valueOf(100), 0, RoundingMode.FLOOR);
+
+            if (maxDiscountAmount != null && maxDiscountAmount.compareTo(BigDecimal.ZERO) > 0) {
+                discount = discount.min(maxDiscountAmount);
+            }
+        } else {
+            discount = discountValue;
+        }
+
+        if (discount.compareTo(BigDecimal.ZERO) < 0) return BigDecimal.ZERO;
+        return discount.min(productAmount);
+    }
 }

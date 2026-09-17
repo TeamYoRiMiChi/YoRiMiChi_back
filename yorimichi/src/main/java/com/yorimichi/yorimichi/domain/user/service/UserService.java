@@ -81,7 +81,7 @@ public class UserService {
         // 탈퇴·정지 회원 차단
         if (!user.isActive()) {
             throw new CustomException(
-                    "WITHDRAWN".equals(user.getStatus())
+                    "INACTIVE".equals(user.getStatus())
                             ? ErrorCode.WITHDRAWN_MEMBER
                             : ErrorCode.SUSPENDED_MEMBER
             );

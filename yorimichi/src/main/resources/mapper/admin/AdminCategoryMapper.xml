@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yorimichi.yorimichi.domain.admin.categories.repository.AdminCategoryMapper">
+
+    <resultMap
+            id="adminCategoryResultMap"
+            type="com.yorimichi.yorimichi.domain.admin.categories.dto.AdminCategoryResponseDto">
+        <id property="categoryId" column="category_id"/>
+        <result property="categoryName" column="category_name"/>
+    </resultMap>
+
+    <sql id="categorySearch">
+        <where>
+            <if test="keyword != null and keyword != ''">
+                category_name LIKE CONCAT('%', #{keyword}, '%')
+                OR CAST(category_id AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+    </sql>
+
+    <select id="findCategories" resultMap="adminCategoryResultMap">
+        SELECT
+            category_id,
+            category_name
+        FROM CATEGORY
+        <include refid="categorySearch"/>
+        ORDER BY category_id DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countCategories" resultType="long">
+        SELECT COUNT(*)
+        FROM CATEGORY
+        <include refid="categorySearch"/>
+    </select>
+    
+    
+    <insert id="insertCategory">
+    	INSERT INTO CATEGORY (
+        	category_name
+    	)
+    	VALUES (
+        	#{categoryName}
+    	)
+	</insert>
+	
+	<select id="countCategoriesByName" resultType="long">
+    	SELECT COUNT(*)
+    	FROM CATEGORY
+    	WHERE category_name = #{categoryName}
+    	<if test="excludedCategoryId != null">
+        	AND category_id != #{excludedCategoryId}
+    	</if>
+	</select>
+	
+	<update id="updateCategory">
+    	UPDATE CATEGORY
+    	SET category_name = #{categoryName}
+    	WHERE category_id = #{categoryId}
+	</update>
+	
+	<delete id="deleteCategory">
+		DELETE from CATEGORY
+		WHERE category_id = #{categoryId}
+	</delete>
+
+</mapper>

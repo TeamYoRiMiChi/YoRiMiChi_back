@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yorimichi.yorimichi.domain.inquiry.repository.InquiryMapper">
+
+    <resultMap id="inquiryResultMap" type="com.yorimichi.yorimichi.domain.inquiry.entity.Inquiry">
+        <id property="inquiryId" column="inquiry_id"/>
+        <result property="memberId" column="member_id"/>
+        <result property="memberName" column="member_name"/>
+        <result property="email" column="email"/>
+        <result property="category" column="category"/>
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="status" column="status"/>
+        <result property="answer" column="answer"/>
+        <result property="answeredAt" column="answered_at"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <insert id="insert"
+            parameterType="com.yorimichi.yorimichi.domain.inquiry.entity.Inquiry"
+            useGeneratedKeys="true"
+            keyProperty="inquiryId">
+        INSERT INTO INQUIRY (
+            member_id,
+            category,
+            title,
+            content,
+            status
+        ) VALUES (
+            #{memberId},
+            #{category},
+            #{title},
+            #{content},
+            #{status}
+        )
+    </insert>
+
+    <select id="findAllByMemberId" resultMap="inquiryResultMap">
+        SELECT
+            inquiry_id,
+            member_id,
+            category,
+            title,
+            content,
+            status,
+            answer,
+            answered_at,
+            created_at,
+            updated_at
+        FROM INQUIRY
+        WHERE member_id = #{memberId}
+        ORDER BY created_at DESC, inquiry_id DESC
+    </select>
+
+    <select id="findById" resultMap="inquiryResultMap">
+        SELECT inquiry_id, member_id, category, title, content, status,
+               answer, answered_at, created_at, updated_at
+        FROM INQUIRY
+        WHERE inquiry_id = #{inquiryId}
+    </select>
+
+    <update id="updatePending">
+        UPDATE INQUIRY
+        SET category = #{category},
+            title = #{title},
+            content = #{content},
+            updated_at = NOW()
+        WHERE inquiry_id = #{inquiryId}
+          AND member_id = #{memberId}
+          AND status = 'WAITING'
+          AND answer IS NULL
+    </update>
+
+    <select id="findAll" resultMap="inquiryResultMap">
+        SELECT
+            i.inquiry_id,
+            i.member_id,
+            m.name AS member_name,
+            m.email,
+            i.category,
+            i.title,
+            i.content,
+            i.status,
+            i.answer,
+            i.answered_at,
+            i.created_at,
+            i.updated_at
+        FROM INQUIRY i
+        JOIN MEMBER m ON m.member_id = i.member_id
+        ORDER BY i.created_at DESC, i.inquiry_id DESC
+    </select>
+
+    <update id="updateAnswer">
+        UPDATE INQUIRY
+        SET answer = #{answer},
+            status = 'ANSWERED',
+            answered_at = NOW(),
+            updated_at = NOW()
+        WHERE inquiry_id = #{inquiryId}
+    </update>
+
+</mapper>

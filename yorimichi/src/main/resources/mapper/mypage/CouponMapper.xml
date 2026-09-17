@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yorimichi.yorimichi.domain.mypage.repository.CouponMapper">
+
+    <resultMap id="myCouponResultMap" type="com.yorimichi.yorimichi.domain.mypage.dto.MyCouponResponseDto">
+        <id     property="memberCouponId"    column="member_coupon_id"/>
+        <result property="couponId"          column="coupon_id"/>
+        <result property="couponName"        column="coupon_name"/>
+        <result property="couponCode"        column="coupon_code"/>
+        <result property="discountType"      column="discount_type"/>
+        <result property="discountValue"     column="discount_value"/>
+        <result property="minOrderAmount"    column="min_order_amount"/>
+        <result property="maxDiscountAmount" column="max_discount_amount"/>
+        <result property="validTo"           column="valid_to"/>
+        <result property="status"            column="status"/>
+    </resultMap>
+
+
+    <resultMap id="claimableCouponResultMap"
+               type="com.yorimichi.yorimichi.domain.mypage.dto.ClaimableCouponResponseDto">
+        <id     property="couponId"          column="coupon_id"/>
+        <result property="couponName"        column="coupon_name"/>
+        <result property="discountType"      column="discount_type"/>
+        <result property="discountValue"     column="discount_value"/>
+        <result property="minOrderAmount"    column="min_order_amount"/>
+        <result property="maxDiscountAmount" column="max_discount_amount"/>
+        <result property="validTo"           column="valid_to"/>
+    </resultMap>
+
+
+    <resultMap id="couponResultMap" type="com.yorimichi.yorimichi.domain.admin.coupon.entity.Coupon">
+        <id     property="couponId"          column="coupon_id"/>
+        <result property="couponCode"        column="coupon_code"/>
+        <result property="couponName"        column="coupon_name"/>
+        <result property="discountType"      column="discount_type"/>
+        <result property="discountValue"     column="discount_value"/>
+        <result property="minOrderAmount"    column="min_order_amount"/>
+        <result property="maxDiscountAmount" column="max_discount_amount"/>
+        <result property="issueType"         column="issue_type"/>
+        <result property="validFrom"         column="valid_from"/>
+        <result property="validTo"           column="valid_to"/>
+        <result property="usageLimit"        column="usage_limit"/>
+        <result property="issuedCount"       column="issued_count"/>
+        <result property="status"            column="status"/>
+        <result property="createdAt"         column="created_at"/>
+        <result property="updatedAt"         column="updated_at"/>
+    </resultMap>
+
+
+    <!--
+      회원쿠폰의 "실질 상태".
+      admin/AdminCouponMapper.xml과 동일한 규칙입니다 — MEMBER_COUPON.status는 USED로 바뀌는 것 말고는
+      발급 시점의 AVAILABLE로 계속 남아있고, 유효기간이 지났다고 자동으로 EXPIRED로 갱신되는 배치가 없어서
+      조회 시점에 "AVAILABLE인데 유효기간이 지났으면 EXPIRED로 간주"해서 계산해줍니다.
+    -->
+    <sql id="memberCouponEffectiveStatus">
+        CASE
+            WHEN mc.status = 'AVAILABLE' AND c.valid_to &lt; NOW() THEN 'EXPIRED'
+            ELSE mc.status
+        END
+    </sql>
+
+
+    <!-- 로그인 회원이 보유한 쿠폰 전체 (사용 가능 / 사용 완료 / 만료 포함) -->
+    <select id="findMyCoupons" resultMap="myCouponResultMap">
+        SELECT mc.member_coupon_id, mc.coupon_id, c.coupon_name, c.coupon_code,
+               c.discount_type, c.discount_value, c.min_order_amount, c.max_discount_amount,
+               c.valid_to,
+               <include refid="memberCouponEffectiveStatus"/> AS status
+        FROM MEMBER_COUPON mc
+        JOIN COUPON c ON c.coupon_id = mc.coupon_id
+        WHERE mc.member_id = #{memberId}
+        ORDER BY mc.issued_at DESC, mc.member_coupon_id DESC
+    </select>
+
+
+    <!--
+      지금 받을 수 있는 이벤트 쿠폰.
+      - status가 ACTIVE이고 issueType이 ALL(누구나 발급 가능)인 쿠폰만 대상
+      - 발급 기간(valid_from ~ valid_to) 안에 있어야 함
+      - usageLimit이 있으면 아직 수량이 남아 있어야 함 (null이면 무제한)
+      - 이 회원이 아직 받지 않은 쿠폰만
+    -->
+    <select id="findClaimableCoupons" resultMap="claimableCouponResultMap">
+        SELECT c.coupon_id, c.coupon_name, c.discount_type, c.discount_value,
+               c.min_order_amount, c.max_discount_amount, c.valid_to
+        FROM COUPON c
+        WHERE c.status = 'ACTIVE'
+          AND c.issue_type = 'ALL'
+          AND c.valid_from &lt;= NOW()
+          AND c.valid_to &gt;= NOW()
+          AND (c.usage_limit IS NULL OR c.issued_count &lt; c.usage_limit)
+          AND NOT EXISTS (
+              SELECT 1 FROM MEMBER_COUPON mc
+              WHERE mc.coupon_id = c.coupon_id AND mc.member_id = #{memberId}
+          )
+        ORDER BY c.valid_to ASC, c.coupon_id DESC
+    </select>
+
+
+    <!-- 보유 쿠폰 단건 (본인 소유 확인 포함) — 주문에 적용하기 전 검증용 -->
+    <select id="findMyCouponById" resultMap="myCouponResultMap">
+        SELECT mc.member_coupon_id, mc.coupon_id, c.coupon_name, c.coupon_code,
+               c.discount_type, c.discount_value, c.min_order_amount, c.max_discount_amount,
+               c.valid_to,
+               <include refid="memberCouponEffectiveStatus"/> AS status
+        FROM MEMBER_COUPON mc
+        JOIN COUPON c ON c.coupon_id = mc.coupon_id
+        WHERE mc.member_coupon_id = #{memberCouponId}
+          AND mc.member_id = #{memberId}
+    </select>
+
+
+    <!--
+      주문에 쿠폰 사용 처리.
+      WHERE status = 'AVAILABLE' 조건이 중요합니다 — 동시에 같은 쿠폰으로 두 번 주문해도
+      먼저 처리된 한쪽만 성공하고, 나머지는 0건이 갱신되어 서비스에서 예외를 던집니다.
+    -->
+    <update id="markCouponUsed">
+        UPDATE MEMBER_COUPON
+        SET status = 'USED',
+            used_at = NOW(),
+            order_id = #{orderId}
+        WHERE member_coupon_id = #{memberCouponId}
+          AND status = 'AVAILABLE'
+    </update>
+
+
+    <!-- 쿠폰 단건 조회 (발급 가능 여부 검증용) -->
+    <select id="findCouponById" resultMap="couponResultMap">
+        SELECT coupon_id, coupon_code, coupon_name, discount_type, discount_value,
+               min_order_amount, max_discount_amount, issue_type, valid_from, valid_to,
+               usage_limit, issued_count, status, created_at, updated_at
+        FROM COUPON
+        WHERE coupon_id = #{couponId}
+    </select>
+
+
+    <!-- 이미 발급받은 쿠폰인지 여부 -->
+    <select id="existsMemberCoupon" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1 FROM MEMBER_COUPON WHERE coupon_id = #{couponId} AND member_id = #{memberId}
+        )
+    </select>
+
+
+    <!-- 회원이 스스로 쿠폰 발급받기 -->
+    <insert id="insertMemberCoupon">
+        INSERT INTO MEMBER_COUPON (coupon_id, member_id)
+        VALUES (#{couponId}, #{memberId})
+    </insert>
+
+
+    <!-- 발급 수량(issued_count) +1 -->
+    <update id="increaseIssuedCount">
+        UPDATE COUPON
+        SET issued_count = issued_count + 1
+        WHERE coupon_id = #{couponId}
+    </update>
+
+</mapper>
