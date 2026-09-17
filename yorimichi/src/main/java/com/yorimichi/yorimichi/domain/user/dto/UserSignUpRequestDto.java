@@ -27,4 +27,12 @@ public class UserSignUpRequestDto {
     private String name;
 
     private String phone;
+
+    /*
+     * 배송지 (전부 任意 — 셋 다 입력하면 가입 직후 자동으로
+     * 기본 배송지(自宅)로 등록됩니다. 받는분 이름/연락처는 위 name/phone을 그대로 씁니다)
+     */
+    private String postalCode;
+    private String address;
+    private String addressDetail;
 }

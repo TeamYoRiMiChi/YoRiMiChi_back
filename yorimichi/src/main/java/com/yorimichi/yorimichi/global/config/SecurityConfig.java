@@ -69,6 +69,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/overseas/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/gb-categories/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/group-buys/**").permitAll()
+                // 우편번호 검색은 회원가입 화면(비로그인)에서도 씁니다
+                .requestMatchers(HttpMethod.GET, "/api/postal-code/**").permitAll()
 
                 // 나머지는 로그인 필요
                 .anyRequest().authenticated()

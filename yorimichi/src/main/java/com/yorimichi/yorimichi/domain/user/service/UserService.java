@@ -6,6 +6,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.yorimichi.yorimichi.domain.mypage.dto.AddressRequestDto;
+import com.yorimichi.yorimichi.domain.mypage.service.AddressService;
 import com.yorimichi.yorimichi.domain.user.dto.LoginRequestDto;
 import com.yorimichi.yorimichi.domain.user.dto.LoginResponseDto;
 import com.yorimichi.yorimichi.domain.user.dto.UserResponseDto;
@@ -24,6 +26,7 @@ public class UserService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
+    private final AddressService addressService;
 
     /**
      * 회원가입
@@ -49,11 +52,31 @@ public class UserService {
 
         userMapper.save(user);
 
+        // 배송지를 같이 입력했으면(우편번호+주소 둘 다) 가입 직후 첫 기본 배송지로 등록합니다
+        if (hasAddress(request)) {
+            AddressRequestDto addressRequest = new AddressRequestDto();
+            addressRequest.setAddressName("自宅");
+            addressRequest.setReceiverName(request.getName().trim());
+            addressRequest.setReceiverPhone(
+                    request.getPhone() != null ? request.getPhone().trim() : "");
+            addressRequest.setPostalCode(request.getPostalCode().trim());
+            addressRequest.setAddress(request.getAddress().trim());
+            addressRequest.setAddressDetail(request.getAddressDetail());
+
+            addressService.createAddress(user.getMemberId(), addressRequest);
+        }
+
         // save 후 DB가 채운 기본값(createdAt 등)까지 담아서 응답
         User saved = userMapper.findById(user.getMemberId())
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         return new UserResponseDto(saved);
+    }
+
+    /** 우편번호·주소를 둘 다 입력했을 때만 배송지로 등록합니다 (상세주소는 없어도 됨) */
+    private boolean hasAddress(UserSignUpRequestDto request) {
+        return request.getPostalCode() != null && !request.getPostalCode().isBlank()
+                && request.getAddress() != null && !request.getAddress().isBlank();
     }
 
     /**

@@ -63,7 +63,12 @@ public enum ErrorCode {
 	COUPON_ALREADY_CLAIMED(HttpStatus.CONFLICT, "N006", "既に受け取ったクーポンです。"),
 	COUPON_NOT_CLAIMABLE(HttpStatus.BAD_REQUEST, "N007", "受け取ることができないクーポンです。"),
 	COUPON_MIN_ORDER_AMOUNT_NOT_MET(HttpStatus.BAD_REQUEST, "N008", "最低注文金額に達していないクーポンです。"),
-	COUPON_NOT_USABLE(HttpStatus.CONFLICT, "N009", "使用できないクーポンです。");
+	COUPON_NOT_USABLE(HttpStatus.CONFLICT, "N009", "使用できないクーポンです。"),
+
+	// Postal code (zipcloud 외부 API 프록시)
+	POSTAL_CODE_INVALID(HttpStatus.BAD_REQUEST, "Z001", "郵便番号の形式が正しくありません。"),
+	POSTAL_CODE_NOT_FOUND(HttpStatus.NOT_FOUND, "Z002", "該当する住所が見つかりません。"),
+	POSTAL_LOOKUP_FAILED(HttpStatus.BAD_GATEWAY, "Z003", "郵便番号検索に失敗しました。");
 
 	private final HttpStatus status;
 	private final String code;

@@ -18,6 +18,7 @@ public class OrderAddress {
 
     private Long addressId;
     private Long memberId;
+    private String addressName;
     private String receiverName;
     private String receiverPhone;
     private String postalCode;
