@@ -89,6 +89,35 @@
         <include refid="searchConditions"/>
 
         <choose>
+            <!--
+              추천순 — 별도 플래그 없이 기존 신호를 엮어서 점수로 계산합니다.
+              (해외직구 전용 findAll에서만 쓰입니다. 공동구매는 findGroupBuyAll이라
+               별개 쿼리라서 여기 영향을 받지 않습니다.)
+
+              찜(WISHLIST)과 장바구니(CART_ITEM)는 "이 상품을 사고 싶다"는
+              의도가 담긴 행동이라 판매량보다 가중치를 높게 뒀습니다.
+              판매량은 이미 popular 정렬에 쓰이므로 낮은 가중치만 더합니다.
+
+              REVIEW는 DB 테이블만 만들어져 있고 아직 백엔드 코드(엔티티/매퍼)는
+              없어서, 여기서는 조회 전용 서브쿼리로만 참조합니다.
+                - 리뷰 개수: 실제로 구매/경험 후 남긴 행동이라 장바구니보다
+                  신뢰도가 높다고 보고 가중치를 4로 뒀습니다.
+                - 평균 평점(1~5점): 리뷰가 하나도 없으면 0으로 처리해
+                  (COALESCE) 유리하지도 불리하지도 않게 합니다. 개수 신호와
+                  스케일을 맞추기 위해 가중치는 2로 뒀습니다.
+            -->
+            <when test="sort == 'recommend'">
+                ORDER BY
+                    (
+                        sales_count
+                        + (SELECT COUNT(*) FROM WISHLIST w WHERE w.product_id = PRODUCT.product_id) * 5
+                        + (SELECT COUNT(*) FROM CART_ITEM ci WHERE ci.product_id = PRODUCT.product_id) * 3
+                        + (SELECT COUNT(*) FROM REVIEW rc WHERE rc.product_id = PRODUCT.product_id) * 4
+                        + (SELECT COALESCE(AVG(rv.rating), 0) FROM REVIEW rv WHERE rv.product_id = PRODUCT.product_id) * 2
+                    ) DESC,
+                    product_id DESC
+            </when>
+
             <when test="sort == 'popular'">
                 ORDER BY sales_count DESC, product_id DESC
             </when>
