@@ -9,6 +9,8 @@ import com.yorimichi.yorimichi.domain.cart.entity.CartItem;
 import com.yorimichi.yorimichi.domain.cart.repository.CartMapper;
 import com.yorimichi.yorimichi.domain.mypage.dto.MyCouponResponseDto;
 import com.yorimichi.yorimichi.domain.mypage.repository.CouponMapper;
+import com.yorimichi.yorimichi.domain.GroupBuy.dto.GroupBuyResponseDto;
+import com.yorimichi.yorimichi.domain.GroupBuy.service.GroupBuyService;
 import com.yorimichi.yorimichi.domain.order.dto.*;
 import com.yorimichi.yorimichi.domain.order.entity.Order;
 import com.yorimichi.yorimichi.domain.order.entity.OrderAddress;
@@ -23,6 +25,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Slf4j
@@ -34,6 +37,7 @@ public class OrderService {
     private final CartMapper cartMapper;
     private final ProductMapper productMapper;
     private final CouponMapper couponMapper;
+    private final GroupBuyService groupBuyService;
 
     /**
      * 주문서 데이터 조회
@@ -53,7 +57,7 @@ public class OrderService {
         BigDecimal rate = getExchangeRate();
 
         List<OrderCheckoutItemDto> items = (productId != null)
-                ? List.of(toDirectItem(productId, quantity, rate))
+                ? List.of(toDirectItem(productId, quantity, rate, saleType))
                 : loadOrderableCartItems(memberId, saleType, cartItemIds).stream()
                         .map(ci -> toCheckoutItem(ci, rate))
                         .toList();
@@ -98,6 +102,12 @@ public class OrderService {
     public OrderResponseDto createOrder(Long memberId, OrderCreateRequestDto request) {
 
         BigDecimal rate = getExchangeRate();
+        boolean directGroupBuy = request.isDirectPurchase()
+                && "GROUP_BUY".equals(normalizeSaleType(request.getSaleType()));
+        GroupBuyResponseDto groupBuy = directGroupBuy
+                ? groupBuyService.getGroupBuyByProductId(request.getProductId())
+                        .orElseThrow(() -> new CustomException(ErrorCode.GROUP_BUY_NOT_FOUND))
+                : null;
 
         /* 1) 주문할 상품 확정 */
         List<CartItem> orderedCartItems = request.isDirectPurchase()
@@ -105,8 +115,20 @@ public class OrderService {
                 : loadOrderableCartItems(
                         memberId, request.getSaleType(), request.getCartItemIds());
 
+        List<CartItem> groupBuyCartItems = orderedCartItems.stream()
+                .filter(item -> "GROUP_BUY".equals(item.getSaleType()))
+                .toList();
+        boolean containsGroupBuy = directGroupBuy || !groupBuyCartItems.isEmpty();
+        boolean containsOverseas = !request.isDirectPurchase()
+                && orderedCartItems.stream().anyMatch(item -> !"GROUP_BUY".equals(item.getSaleType()));
+        String orderType = containsGroupBuy
+                ? (containsOverseas ? "MIXED" : "GROUP_BUY")
+                : "NORMAL";
+        Long orderGroupBuyId = groupBuy == null ? singleGroupBuyId(groupBuyCartItems) : groupBuy.getGroupBuyId();
+
         List<OrderCheckoutItemDto> items = request.isDirectPurchase()
-                ? List.of(toDirectItem(request.getProductId(), request.getQuantity(), rate))
+                ? List.of(toDirectItem(
+                        request.getProductId(), request.getQuantity(), rate, request.getSaleType()))
                 : orderedCartItems.stream().map(ci -> toCheckoutItem(ci, rate)).toList();
 
         /* 2) 배송지 확정 */
@@ -137,8 +159,9 @@ public class OrderService {
         /* 4) 주문 저장 */
         Order order = Order.builder()
                 .memberId(memberId)
+                .groupBuyId(orderGroupBuyId)
                 .orderNumber(generateOrderNumber())
-                .orderType("GROUP_BUY".equals(request.getSaleType()) ? "GROUP_BUY" : "NORMAL")
+                .orderType(orderType)
                 .receiverName(shipping.receiverName)
                 .receiverPhone(shipping.receiverPhone)
                 .postalCode(shipping.postalCode)
@@ -150,7 +173,7 @@ public class OrderService {
                 .shippingFee(amounts.overseasShipping.add(amounts.domesticShipping))
                 .customsDuty(amounts.customsDuty)
                 .totalAmount(finalTotal)
-                .orderStatus("PENDING")
+                .orderStatus(containsGroupBuy ? "PAID" : "PENDING")
                 .build();
 
         orderMapper.insertOrder(order);
@@ -187,8 +210,21 @@ public class OrderService {
         }
 
         /* 6) 결제·배송 정보 생성 (쿠폰 할인이 반영된 최종 금액으로 결제 생성) */
-        orderMapper.insertPayment(order.getOrderId(), request.getPaymentMethod(), finalTotal);
+        orderMapper.insertPayment(
+                order.getOrderId(),
+                request.getPaymentMethod(),
+                containsGroupBuy ? "PAID" : "PENDING",
+                finalTotal
+        );
         orderMapper.insertShipping(order.getOrderId());
+
+        /* 테스트 결제 완료 후에만 공동구매 참여 수량을 반영합니다. */
+        if (directGroupBuy) {
+            groupBuyService.participate(memberId, request.getProductId(), request.getQuantity());
+        }
+        for (CartItem item : groupBuyCartItems) {
+            groupBuyService.participate(memberId, item.getProductId(), item.getQuantity());
+        }
 
         /* 7) 주문한 장바구니 항목만 삭제합니다. 품절 상품과 다른 판매 방식은 남깁니다. */
         if (!request.isDirectPurchase()) {
@@ -217,7 +253,8 @@ public class OrderService {
     ============================================ */
 
     /** 바로구매 — 상품 하나를 주문 항목으로 만듭니다 */
-    private OrderCheckoutItemDto toDirectItem(Long productId, Integer quantity, BigDecimal rate) {
+    private OrderCheckoutItemDto toDirectItem(Long productId, Integer quantity, BigDecimal rate,
+                                              String requestedSaleType) {
 
         int qty = (quantity == null || quantity < 1) ? 1 : quantity;
 
@@ -233,13 +270,14 @@ public class OrderService {
 
         return new OrderCheckoutItemDto(
                 product.getProductId(),
+                requestedSaleType == null ? product.getSaleType() : normalizeSaleType(requestedSaleType),
                 product.getBrand(),
                 product.getProductName(),
                 product.getThumbnailUrl(),
                 product.getPriceJpy(),
                 OrderCalculator.toKrw(product.getPriceJpy(), rate),
                 qty,
-                OrderCalculator.overseasShipping(1),
+                BigDecimal.ZERO,
                 BigDecimal.ZERO
         );
     }
@@ -290,6 +328,16 @@ public class OrderService {
             throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
         }
         return normalized;
+    }
+
+    /** 주문에 공동구매가 하나만 포함된 경우 ORDERS의 대표 공동구매 번호를 저장합니다. */
+    private Long singleGroupBuyId(List<CartItem> groupBuyItems) {
+        List<Long> ids = groupBuyItems.stream()
+                .map(CartItem::getGroupBuyId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        return ids.size() == 1 ? ids.get(0) : null;
     }
 
     /**
@@ -398,13 +446,14 @@ public class OrderService {
 
         return new OrderCheckoutItemDto(
                 ci.getProductId(),
+                ci.getSaleType(),
                 ci.getBrand(),
                 ci.getProductName(),
                 ci.getThumbnailUrl(),
                 ci.getPriceJpy(),
                 OrderCalculator.toKrw(ci.getPriceJpy(), rate),
                 ci.getQuantity(),
-                OrderCalculator.overseasShipping(1),
+                BigDecimal.ZERO,
                 BigDecimal.ZERO   // 국내 배송비는 주문 단위라 상품별로는 0
         );
     }
@@ -415,9 +464,19 @@ public class OrderService {
                 .map(OrderCheckoutItemDto::getItemTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal overseas = OrderCalculator.overseasShipping(items.size());
+        BigDecimal overseasProductAmount = items.stream()
+                .filter(item -> !"GROUP_BUY".equals(item.getSaleType()))
+                .map(OrderCheckoutItemDto::getItemTotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        boolean hasOverseasProduct = overseasProductAmount.compareTo(BigDecimal.ZERO) > 0;
+
+        /* 해외직구 상품이 하나라도 있으면 주문당 배송비를 한 번만 부과합니다. */
+        BigDecimal overseas = OrderCalculator.overseasShipping(hasOverseasProduct ? 1 : 0);
+        /* 공동구매도 국내 배송 대상이므로 전체 상품 금액 기준으로 주문당 한 번 부과합니다. */
         BigDecimal domestic = OrderCalculator.domesticShipping(productAmount);
-        BigDecimal customs = OrderCalculator.customsDuty(productAmount);
+        BigDecimal customs = hasOverseasProduct
+                ? OrderCalculator.customsDuty(overseasProductAmount)
+                : BigDecimal.ZERO;
 
         BigDecimal total = productAmount.add(overseas).add(domestic).add(customs);
 

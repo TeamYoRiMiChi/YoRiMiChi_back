@@ -39,7 +39,7 @@ public final class OrderCalculator {
         return priceJpy.multiply(rate).setScale(0, RoundingMode.HALF_UP);
     }
 
-    /** 해외 배송비 — 상품 종류 수만큼 부과 */
+    /** 해외 배송비 — 호출부에서 해외직구 상품 유무를 0 또는 1로 전달해 주문당 한 번만 부과 */
     public static BigDecimal overseasShipping(int itemKinds) {
         return OVERSEAS_SHIPPING_PER_ITEM.multiply(BigDecimal.valueOf(itemKinds));
     }
