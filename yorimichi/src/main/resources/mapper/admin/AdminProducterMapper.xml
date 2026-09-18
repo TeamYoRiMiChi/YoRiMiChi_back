@@ -6,7 +6,43 @@
 
 <mapper namespace="com.yorimichi.yorimichi.domain.admin.repository.AdminProductMapper">
 
+    <!--
+        관리자 상품관리 화면에 표시할 전체 상품 조회
+
+        id="findAllProducts"
+        → AdminProductMapper.java의 findAllProducts()와 연결
+
+        resultType
+        → 조회된 DB 데이터를 Product 객체에 저장
+    -->
+    <select id="findAllProducts"
+            resultType="com.yorimichi.yorimichi.domain.product.entity.Product">
+
+        SELECT
+            product_id AS productId,
+            category_id AS categoryId,
+            sale_type AS saleType,
+            brand,
+            product_name AS productName,
+            product_name_jp AS productNameJp,
+            price_jpy AS priceJpy,
+            original_price_jpy AS originalPriceJpy,
+            stock,
+            sales_count AS salesCount,
+            thumbnail_url AS thumbnailUrl,
+            status
+        FROM PRODUCT
+        ORDER BY product_id DESC
+
+    </select>
+
+    <!--
+        관리자 상품 수정
+
+        프론트가 보낸 카테고리, 재고, 상태를 PRODUCT 테이블에 반영
+    -->
     <update id="updateProduct">
+
         UPDATE PRODUCT
         SET
             category_id = #{request.categoryId},
@@ -14,6 +50,7 @@
             status = #{request.status},
             updated_at = CURRENT_TIMESTAMP
         WHERE product_id = #{productId}
+
     </update>
 
 </mapper>
