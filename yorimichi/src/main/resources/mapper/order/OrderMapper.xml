@@ -100,7 +100,7 @@
 
     <insert id="insertPayment">
         INSERT INTO PAYMENT (order_id, payment_method, payment_status, amount)
-        VALUES (#{orderId}, #{paymentMethod}, 'PENDING', #{amount})
+        VALUES (#{orderId}, #{paymentMethod}, #{paymentStatus}, #{amount})
     </insert>
 
 

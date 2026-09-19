@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 public class OrderCheckoutItemDto {
 
     private final Long productId;
+    private final String saleType;
     private final String brand;
     private final String productName;
     private final String thumbnailUrl;
@@ -27,6 +28,7 @@ public class OrderCheckoutItemDto {
     private final BigDecimal domesticShipping;
 
     public OrderCheckoutItemDto(Long productId,
+                                String saleType,
                                 String brand,
                                 String productName,
                                 String thumbnailUrl,
@@ -36,6 +38,7 @@ public class OrderCheckoutItemDto {
                                 BigDecimal overseasShipping,
                                 BigDecimal domesticShipping) {
         this.productId = productId;
+        this.saleType = saleType;
         this.brand = brand;
         this.productName = productName;
         this.thumbnailUrl = thumbnailUrl;

@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<!DOCTYPE mapper
-        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="com.yorimichi.yorimichi.domain.admin.repository.AdminProductMapper">
 
-<mapper namespace="com.yorimichi.yorimichi.domain.admin.repository.AdminProductMapper">
-
-    <!--
+	<!--
         관리자 상품관리 화면에 표시할 전체 상품 조회
 
         id="findAllProducts"
@@ -15,42 +13,127 @@
         resultType
         → 조회된 DB 데이터를 Product 객체에 저장
     -->
-    <select id="findAllProducts"
-            resultType="com.yorimichi.yorimichi.domain.product.entity.Product">
+	<select id="findAllProducts"
+		resultType="com.yorimichi.yorimichi.domain.product.entity.Product">
+		SELECT
+		product_id AS productId,
+		category_id AS categoryId,
+		sale_type AS saleType,
+		brand,
+		product_name AS productName,
+		product_name_jp AS productNameJp,
+		price_jpy AS priceJpy,
+		original_price_jpy AS originalPriceJpy,
+		stock,
+		sales_count AS salesCount,
+		thumbnail_url AS thumbnailUrl,
+		status
+		FROM PRODUCT
+		WHERE is_deleted = 0
+		ORDER BY product_id DESC
 
-        SELECT
-            product_id AS productId,
-            category_id AS categoryId,
-            sale_type AS saleType,
-            brand,
-            product_name AS productName,
-            product_name_jp AS productNameJp,
-            price_jpy AS priceJpy,
-            original_price_jpy AS originalPriceJpy,
-            stock,
-            sales_count AS salesCount,
-            thumbnail_url AS thumbnailUrl,
-            status
-        FROM PRODUCT
-        ORDER BY product_id DESC
+	</select>
 
-    </select>
 
-    <!--
+	<!-- 관리자 상품 등록 -->
+	<insert id="insertProduct"
+		parameterType="com.yorimichi.yorimichi.domain.product.entity.Product"
+		useGeneratedKeys="true"
+		keyProperty="productId">
+
+		INSERT INTO PRODUCT (
+		category_id,
+		sale_type,
+		brand,
+		product_name,
+		product_name_jp,
+		price_jpy,
+		original_price_jpy,
+		stock,
+		sales_count,
+		thumbnail_url,
+		status,
+		created_at,
+		updated_at
+		) VALUES (
+		#{categoryId},
+		#{saleType},
+		#{brand},
+		#{productName},
+		#{productNameJp},
+		#{priceJpy},
+		#{originalPriceJpy},
+		#{stock},
+		0,
+		#{thumbnailUrl},
+		#{status},
+		CURRENT_TIMESTAMP,
+		CURRENT_TIMESTAMP
+		)
+
+	</insert>
+
+	<!-- 공동구매 모집 정보 등록 -->
+	<insert id="insertGroupBuy">
+
+		INSERT INTO GROUP_BUY (
+		product_id,
+		creator_id,
+		title,
+		description,
+		target_quantity,
+		current_quantity,
+		start_date,
+		end_date,
+		status,
+		created_at,
+		updated_at
+		) VALUES (
+		#{productId},
+		#{creatorId},
+		#{request.groupBuyTitle},
+		#{request.groupBuyDescription},
+		#{request.targetQuantity},
+		0,
+		#{request.startDate},
+		#{request.endDate},
+		'RECRUITING',
+		CURRENT_TIMESTAMP,
+		CURRENT_TIMESTAMP
+		)
+
+	</insert>
+
+	<!--
         관리자 상품 수정
 
         프론트가 보낸 카테고리, 재고, 상태를 PRODUCT 테이블에 반영
     -->
-    <update id="updateProduct">
-
-        UPDATE PRODUCT
-        SET
-            category_id = #{request.categoryId},
-            stock = #{request.stock},
-            status = #{request.status},
-            updated_at = CURRENT_TIMESTAMP
-        WHERE product_id = #{productId}
-
-    </update>
-
+	<update id="updateProduct">
+		UPDATE PRODUCT
+		SET
+		category_id = #{request.categoryId},
+		price_jpy = #{request.priceJpy},
+		original_price_jpy = #{request.originalPriceJpy},
+		stock = #{request.stock},
+		status = #{request.status},
+		updated_at = CURRENT_TIMESTAMP
+		WHERE product_id = #{productId}
+	</update>
+	<!-- 인생이힘들다 삭제 -->
+	<update id="deleteProduct">
+    UPDATE PRODUCT
+    SET
+        is_deleted = 1,
+        status = 'HIDDEN',
+        updated_at = CURRENT_TIMESTAMP
+    WHERE product_id = #{productId}
+      AND is_deleted = 0
+</update>
+	<select id="countProductById" resultType="int">
+    SELECT COUNT(*)
+    FROM PRODUCT
+    WHERE product_id = #{productId}
+      AND is_deleted = 0
+</select>
 </mapper>

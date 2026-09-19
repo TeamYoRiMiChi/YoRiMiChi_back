@@ -1,11 +1,13 @@
 package com.yorimichi.yorimichi.domain.admin.controller;
-
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import com.yorimichi.yorimichi.domain.admin.dto.AdminProductUpdateRequest;
 import com.yorimichi.yorimichi.domain.admin.service.AdminProductService;
 import com.yorimichi.yorimichi.domain.product.dto.ProductResponseDto;
 import com.yorimichi.yorimichi.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,7 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-
+import com.yorimichi.yorimichi.domain.admin.dto.AdminProductCreateRequest;
+import org.springframework.web.bind.annotation.PostMapping;
 /**
  * 관리자 상품관리 API
  *
@@ -40,6 +43,21 @@ public class AdminProductController {
                 adminProductService.getProducts()
         );
     }
+    
+    /**관리자 상품 등록**/
+    @PostMapping
+    public ApiResponse<ProductResponseDto> createProduct(
+            @AuthenticationPrincipal Long memberId,
+            @Valid @RequestBody AdminProductCreateRequest request
+    ) {
+        return ApiResponse.success(
+                adminProductService.createProduct(
+                        memberId,
+                        request
+                )
+        );
+    }
+    
 
     /**
      * 관리자 상품 수정
@@ -55,5 +73,13 @@ public class AdminProductController {
                         request
                 )
         );
+    }
+    /**삭제**/
+    @DeleteMapping("/{productId}")
+    public ApiResponse<Void> deleteProduct(
+            @PathVariable("productId") Long productId
+    ) {
+        adminProductService.deleteProduct(productId);
+        return ApiResponse.success(null);
     }
 }

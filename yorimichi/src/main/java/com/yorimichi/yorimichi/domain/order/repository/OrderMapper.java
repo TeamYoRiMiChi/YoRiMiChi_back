@@ -40,9 +40,10 @@ public interface OrderMapper {
 
     void insertOrderItem(OrderLine item);
 
-    /** 결제 정보 생성 (PENDING 상태로) */
+    /** 결제 정보 생성 */
     void insertPayment(@Param("orderId") Long orderId,
                        @Param("paymentMethod") String paymentMethod,
+                       @Param("paymentStatus") String paymentStatus,
                        @Param("amount") BigDecimal amount);
 
     /** 배송 정보 생성 (PREPARING 상태로) */
