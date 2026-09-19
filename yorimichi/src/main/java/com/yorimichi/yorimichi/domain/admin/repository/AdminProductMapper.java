@@ -46,22 +46,20 @@ public interface AdminProductMapper {
             AdminProductUpdateRequest request
     );
 
-    /**
-     * 공동구매 모집 정보 삭제
-     */
-    int deleteGroupBuyByProductId(
-            @Param("productId")
-            Long productId
-    );
+
+  
 
     /**
-     * 관리자 상품 삭제
+     * 관리자 상품 소프트 삭제
      */
     int deleteProduct(
             @Param("productId")
             Long productId
     );
 
+    /**
+     * 상품 존재 여부 확인
+     */
     int countProductById(
             @Param("productId")
             Long productId

@@ -29,6 +29,7 @@
 		thumbnail_url AS thumbnailUrl,
 		status
 		FROM PRODUCT
+		WHERE is_deleted = 0
 		ORDER BY product_id DESC
 
 	</select>
@@ -119,19 +120,20 @@
 		updated_at = CURRENT_TIMESTAMP
 		WHERE product_id = #{productId}
 	</update>
-	<delete id="deleteGroupBuyByProductId">
-		DELETE FROM GROUP_BUY
-		WHERE product_id = #{productId}
-	</delete>
-
-	<delete id="deleteProduct">
-		DELETE FROM PRODUCT
-		WHERE product_id = #{productId}
-	</delete>
-
+	<!-- 인생이힘들다 삭제 -->
+	<update id="deleteProduct">
+    UPDATE PRODUCT
+    SET
+        is_deleted = 1,
+        status = 'HIDDEN',
+        updated_at = CURRENT_TIMESTAMP
+    WHERE product_id = #{productId}
+      AND is_deleted = 0
+</update>
 	<select id="countProductById" resultType="int">
-		SELECT COUNT(*)
-		FROM PRODUCT
-		WHERE product_id = #{productId}
-	</select>
+    SELECT COUNT(*)
+    FROM PRODUCT
+    WHERE product_id = #{productId}
+      AND is_deleted = 0
+</select>
 </mapper>

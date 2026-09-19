@@ -237,11 +237,14 @@ public class AdminProductService {
             );
         }
 
-        adminProductMapper.deleteGroupBuyByProductId(
-                productId
-        );
+        int updatedRows =
+                adminProductMapper.deleteProduct(productId);
 
-        adminProductMapper.deleteProduct(productId);
+        if (updatedRows == 0) {
+            throw new IllegalStateException(
+                    "상품 삭제에 실패했습니다."
+            );
+        }
     }
 		
   
