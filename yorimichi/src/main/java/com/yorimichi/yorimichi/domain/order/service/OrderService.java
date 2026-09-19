@@ -64,7 +64,8 @@ public class OrderService {
                 .map(OrderAddressDto::new)
                 .orElse(null);
 
-        String customsCode = orderMapper.findCustomsCode(memberId).orElse(null);
+        // 일본은 통관부호가 필요 없어 비활성화 (원래 로직: orderMapper.findCustomsCode(memberId).orElse(null))
+        String customsCode = null;
 
         return new OrderCheckoutResponseDto(
                 address,
@@ -112,8 +113,8 @@ public class OrderService {
         /* 2) 배송지 확정 */
         ShippingTarget shipping = resolveAddress(memberId, request);
 
-        /* 3) 통관부호 확정 */
-        String customsCode = resolveCustomsCode(memberId, request);
+        /* 3) 통관부호 확정 — 일본은 통관부호가 필요 없어 비활성화 (원래 로직은 resolveCustomsCode()에 주석으로 보존) */
+        String customsCode = null; // = resolveCustomsCode(memberId, request);
 
         Amounts amounts = calculate(items);
 
@@ -335,12 +336,14 @@ public class OrderService {
     }
 
     /**
-     * 통관부호 확정
+     * 통관부호 확정 — 일본은 통관부호가 필요 없어 더 이상 호출하지 않습니다.
+     * 나중에 다시 필요해질 수도 있어 삭제하지 않고 주석으로 보존합니다.
      *
      * 회원 정보에 저장된 값을 우선 쓰고,
      * 없으면 주문서에서 입력한 값을 쓰면서 회원 정보에도 저장합니다.
      * 다음 주문부터는 다시 입력하지 않아도 되도록요.
      */
+    /*
     private String resolveCustomsCode(Long memberId, OrderCreateRequestDto request) {
 
         String saved = orderMapper.findCustomsCode(memberId).orElse(null);
@@ -357,6 +360,7 @@ public class OrderService {
         orderMapper.updateCustomsCode(memberId, code);
         return code;
     }
+    */
 
     /**
      * 쿠폰 검증.
