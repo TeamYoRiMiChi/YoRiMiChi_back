@@ -33,4 +33,23 @@ public class AdminMemberService {
 		
 		return adminMemberMapper.findAllMembers();
 	}
+	
+	@Transactional
+	public void updateMemberStatus(Long adminMemberId, Long targetMemberId, String status) {
+		if(adminMemberId == null) {
+			throw new CustomException(ErrorCode.UNAUTHORIZED);
+		}
+		User admin = userMapper.findById(adminMemberId).orElseThrow(() -> new
+				CustomException(ErrorCode.USER_NOT_FOUND));
+		if(!"ADMIN".equals(admin.getRole()) || !"ACTIVE".equals(admin.getStatus())) {
+			throw new CustomException(ErrorCode.ADMIN_ACCESS_DENIED);
+		}
+		if(!"ACTIVE".equals(status) && !"INACTIVE".equals(status)) {
+			throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+		}
+		
+		userMapper.findById(targetMemberId).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+		
+		adminMemberMapper.updateMemberStatus(targetMemberId, status);
+	}
 }

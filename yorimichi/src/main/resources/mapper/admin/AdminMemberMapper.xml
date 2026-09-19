@@ -28,4 +28,17 @@ namespace="com.yorimichi.yorimichi.domain.admin.users.repository.AdminMemberMapp
 		FROM MEMBER
 		ORDER BY created_at DESC, member_id DESC
 	</select>
+	
+	<update id="updateMemberStatus">
+		UPDATE MEMBER
+		SET
+			status = #{status},
+			withdrawn_at = CASE
+				WHEN #{status} = 'INACTIVE' THEN CURRENT_TIMESTAMP
+				ELSE NULL
+			END,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE member_id = #{memberId}
+	</update>
+	
 </mapper>
