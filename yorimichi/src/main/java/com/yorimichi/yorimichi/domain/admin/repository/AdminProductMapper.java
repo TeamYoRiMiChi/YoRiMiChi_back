@@ -1,5 +1,6 @@
 package com.yorimichi.yorimichi.domain.admin.repository;
 
+import com.yorimichi.yorimichi.domain.admin.dto.AdminProductCreateRequest;
 import com.yorimichi.yorimichi.domain.admin.dto.AdminProductUpdateRequest;
 import com.yorimichi.yorimichi.domain.product.entity.Product;
 import org.apache.ibatis.annotations.Mapper;
@@ -10,23 +11,59 @@ import java.util.List;
 @Mapper
 public interface AdminProductMapper {
 
-    /*
-     * 관리자 상품관리 화면에 표시할 전체 상품을 조회한다.
-     *
-     * 실제 SELECT SQL은 AdminProductMapper.xml에 작성한다.
-     * PRODUCT 테이블의 여러 행을 조회하므로 List<Product>로 받는다.
+    /**
+     * 관리자 상품 전체 조회
      */
     List<Product> findAllProducts();
 
-    /*
-     * 관리자가 변경한 상품 정보를 수정한다.
-     *
-     * productId: 수정할 상품 번호
-     * request: 변경할 카테고리, 재고, 상품 상태
-     * 반환값: 실제로 수정된 행의 개수
+    /**
+     * 상품 등록
+     */
+    int insertProduct(Product product);
+
+    /**
+     * 공동구매 모집 정보 등록
+     */
+    int insertGroupBuy(
+            @Param("productId")
+            Long productId,
+
+            @Param("creatorId")
+            Long creatorId,
+
+            @Param("request")
+            AdminProductCreateRequest request
+    );
+
+    /**
+     * 관리자 상품 수정
      */
     int updateProduct(
-            @Param("productId") Long productId,
-            @Param("request") AdminProductUpdateRequest request
+            @Param("productId")
+            Long productId,
+
+            @Param("request")
+            AdminProductUpdateRequest request
+    );
+
+    /**
+     * 공동구매 모집 정보 삭제
+     */
+    int deleteGroupBuyByProductId(
+            @Param("productId")
+            Long productId
+    );
+
+    /**
+     * 관리자 상품 삭제
+     */
+    int deleteProduct(
+            @Param("productId")
+            Long productId
+    );
+
+    int countProductById(
+            @Param("productId")
+            Long productId
     );
 }
