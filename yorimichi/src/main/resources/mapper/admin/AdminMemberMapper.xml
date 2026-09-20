@@ -41,4 +41,12 @@ namespace="com.yorimichi.yorimichi.domain.admin.users.repository.AdminMemberMapp
 		WHERE member_id = #{memberId}
 	</update>
 	
+	<update id="demoteAdminToUser">
+		UPDATE MEMBER
+		SET
+			role = 'USER',
+			updated_at = CURRENT_TIMESTAMP
+		WHERE member_id = #{memberId}
+			AND role = 'ADMIN'
+	</update>
 </mapper>

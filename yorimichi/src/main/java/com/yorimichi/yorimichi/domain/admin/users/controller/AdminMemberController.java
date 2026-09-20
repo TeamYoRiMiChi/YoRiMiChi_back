@@ -40,4 +40,14 @@ public class AdminMemberController {
     	
     	return ApiResponse.success(null);
     }
+    
+    @PatchMapping("/{memberId}/demote")
+    public ApiResponse<Void> demoteAdminToUser(
+            @AuthenticationPrincipal Long adminMemberId,
+            @PathVariable("memberId") Long targetMemberId) {
+
+        adminMemberService.demoteAdminToUser(adminMemberId, targetMemberId);
+        return ApiResponse.success(null);
+    }
+    
 }

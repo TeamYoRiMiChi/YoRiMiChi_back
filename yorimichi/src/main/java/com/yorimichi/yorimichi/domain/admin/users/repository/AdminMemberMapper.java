@@ -15,4 +15,5 @@ public interface AdminMemberMapper {
 			@Param("memberId") Long memberId,
 			@Param("status") String status
 	);
+	int demoteAdminToUser(@Param("memberId") Long memberId);
 }
