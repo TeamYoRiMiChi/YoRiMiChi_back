@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yorimichi.yorimichi.domain.admin.orders.repository.AdminOrderMapper">
+
+    <select id="findOrders" resultType="com.yorimichi.yorimichi.domain.admin.orders.dto.AdminOrderResponseDto">
+        SELECT
+            o.order_id,
+            o.order_number,
+            o.order_type,
+            o.order_status,
+            o.total_amount,
+            o.discount_amount,
+            o.ordered_at,
+            m.member_id,
+            m.name AS member_name,
+            m.email AS member_email,
+            m.phone AS member_phone,
+            oi.order_item_id AS first_order_item_id,
+            oi.product_name AS first_product_name,
+            p.thumbnail_url AS first_thumbnail_url,
+            oi.quantity AS first_item_quantity,
+            (
+                SELECT COUNT(*)
+                FROM ORDER_ITEM oi_count
+                WHERE oi_count.order_id = o.order_id
+            ) AS item_count,
+            pay.payment_method,
+            pay.payment_status,
+            s.shipping_status,
+            s.carrier,
+            s.tracking_number
+        FROM ORDERS o
+        JOIN MEMBER m
+            ON m.member_id = o.member_id
+        LEFT JOIN ORDER_ITEM oi
+            ON oi.order_item_id = (
+                SELECT MIN(oi_first.order_item_id)
+                FROM ORDER_ITEM oi_first
+                WHERE oi_first.order_id = o.order_id
+            )
+        LEFT JOIN PRODUCT p
+            ON p.product_id = oi.product_id
+        LEFT JOIN PAYMENT pay
+            ON pay.order_id = o.order_id
+        LEFT JOIN SHIPPING s
+            ON s.order_id = o.order_id
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (
+                    o.order_number LIKE CONCAT('%', #{keyword}, '%')
+                    OR m.email LIKE CONCAT('%', #{keyword}, '%')
+                )
+            </if>
+            <if test="orderType != null and orderType != ''">
+                AND o.order_type = #{orderType}
+            </if>
+            <if test="orderStatus != null and orderStatus != ''">
+                AND o.order_status = #{orderStatus}
+            </if>
+            <if test="shippingStatus != null and shippingStatus != ''">
+                AND s.shipping_status = #{shippingStatus}
+            </if>
+        </where>
+        ORDER BY o.ordered_at DESC
+        LIMIT #{size}
+        OFFSET #{offset}
+    </select>
+
+    <select id="countOrders" resultType="long">
+        SELECT COUNT(*)
+        FROM ORDERS o
+        JOIN MEMBER m
+            ON m.member_id = o.member_id
+        LEFT JOIN SHIPPING s
+            ON s.order_id = o.order_id
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (
+                    o.order_number LIKE CONCAT('%', #{keyword}, '%')
+                    OR m.email LIKE CONCAT('%', #{keyword}, '%')
+                )
+            </if>
+            <if test="orderType != null and orderType != ''">
+                AND o.order_type = #{orderType}
+            </if>
+            <if test="orderStatus != null and orderStatus != ''">
+                AND o.order_status = #{orderStatus}
+            </if>
+            <if test="shippingStatus != null and shippingStatus != ''">
+                AND s.shipping_status = #{shippingStatus}
+            </if>
+        </where>
+    </select>
+
+    <select id="findOrderSummary" resultType="com.yorimichi.yorimichi.domain.admin.orders.dto.AdminOrderSummaryResponseDto">
+        SELECT
+    		COUNT(*) AS total_count,
+    		SUM(CASE WHEN order_status = 'PAID' THEN 1 ELSE 0 END) AS paid_count,
+    		SUM(CASE WHEN order_status = 'PREPARING' THEN 1 ELSE 0 END) AS preparing_count,
+    		SUM(CASE WHEN order_status = 'SHIPPING' THEN 1 ELSE 0 END) AS shipping_count,
+    		SUM(CASE WHEN order_status = 'DELIVERED' THEN 1 ELSE 0 END) AS delivered_count,
+    		SUM(CASE WHEN order_status = 'CANCELLED' THEN 1 ELSE 0 END) AS cancelled_count,
+    		SUM(CASE WHEN order_status = 'REFUNDED' THEN 1 ELSE 0 END) AS refunded_count
+		FROM ORDERS
+    </select>
+    
+    <select id="findOrderStatus" resultType="string">
+        SELECT order_status
+        FROM ORDERS
+        WHERE order_id = #{orderId}
+    </select>
+
+    <select id="findPaymentStatus" resultType="string">
+        SELECT payment_status
+        FROM PAYMENT
+        WHERE order_id = #{orderId}
+    </select>
+    
+    <select id="countShippingInfo" resultType="int">
+    	SELECT COUNT(*)
+    	FROM SHIPPING
+    	WHERE order_id = #{orderId}
+      	AND carrier IS NOT NULL
+      	AND carrier != ''
+      	AND tracking_number IS NOT NULL
+      	AND tracking_number != ''
+	</select>
+
+    <update id="updateOrderStatus">
+        UPDATE ORDERS
+        SET order_status = #{orderStatus}
+        WHERE order_id = #{orderId}
+    </update>
+
+    <update id="updatePaymentStatus">
+        UPDATE PAYMENT
+        SET payment_status = #{paymentStatus}
+        WHERE order_id = #{orderId}
+    </update>
+
+    <update id="updateShippingStatus">
+        UPDATE SHIPPING
+    	SET
+        	shipping_status = #{shippingStatus},
+        	shipped_at = CASE
+            	WHEN #{shippingStatus} = 'SHIPPING' THEN NOW()
+            	ELSE shipped_at
+        	END,
+        	delivered_at = CASE
+            	WHEN #{shippingStatus} = 'DELIVERED' THEN NOW()
+            	ELSE delivered_at
+        	END
+    	WHERE order_id = #{orderId}
+    </update>
+
+    <update id="updateShippingInfo">
+        UPDATE SHIPPING
+        SET
+            carrier = #{carrier},
+            tracking_number = #{trackingNumber}
+        WHERE order_id = #{orderId}
+    </update>
+
+	<select id="findOrderDetail" resultType="com.yorimichi.yorimichi.domain.admin.orders.dto.AdminOrderDetailResponseDto">
+    	SELECT
+        	o.order_id,
+        	o.order_number,
+        	o.order_type,
+        	o.order_status,
+        	o.ordered_at,
+        	m.member_id,
+        	m.name AS member_name,
+        	m.email AS member_email,
+        	m.phone AS member_phone,
+        	o.receiver_name,
+        	o.receiver_phone,
+        	o.postal_code,
+        	o.address,
+        	o.address_detail,
+        	o.product_amount,
+        	o.shipping_fee,
+        	o.customs_duty,
+        	o.discount_amount,
+        	o.total_amount,
+        	pay.payment_method,
+        	pay.payment_status,
+        	pay.paid_at,
+        	pay.cancelled_at,
+        	s.shipping_status,
+        	s.carrier,
+        	s.tracking_number,
+        	s.shipped_at,
+        	s.delivered_at
+    	FROM ORDERS o
+    	JOIN MEMBER m
+        	ON m.member_id = o.member_id
+    	LEFT JOIN PAYMENT pay
+        	ON pay.order_id = o.order_id
+    	LEFT JOIN SHIPPING s
+        	ON s.order_id = o.order_id
+    	WHERE o.order_id = #{orderId}
+	</select>
+
+	<select id="findOrderDetailItems" resultType="com.yorimichi.yorimichi.domain.admin.orders.dto.AdminOrderDetailItemResponseDto">
+    	SELECT
+        	oi.order_item_id,
+        	oi.product_id,
+        	oi.sale_type,
+        	oi.product_name,
+        	p.thumbnail_url,
+        	oi.price_jpy,
+        	oi.quantity,
+        	oi.item_total
+    	FROM ORDER_ITEM oi
+    	LEFT JOIN PRODUCT p
+        	ON p.product_id = oi.product_id
+    	WHERE oi.order_id = #{orderId}
+    	ORDER BY oi.order_item_id
+	</select>
+</mapper>
