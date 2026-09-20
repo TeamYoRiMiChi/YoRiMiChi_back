@@ -11,8 +11,8 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import com.yorimichi.yorimichi.domain.postal.dto.PostalAddressDto;
 import com.yorimichi.yorimichi.global.error.CustomException;
 import com.yorimichi.yorimichi.global.error.ErrorCode;
