@@ -23,6 +23,7 @@
 
     	<result property="orderId" column="order_id"/>
     	<result property="productId" column="product_id"/>
+    	<result property="saleType" column="sale_type"/>
     	<result property="productName" column="product_name"/>
     	<result property="priceJpy" column="price_jpy"/>
     	<result property="priceKrw" column="price_krw"/>
@@ -52,6 +53,7 @@
         	order_item_id,
         	order_id,
         	product_id,
+        	sale_type,
         	product_name,
         	price_jpy,
         	price_krw,

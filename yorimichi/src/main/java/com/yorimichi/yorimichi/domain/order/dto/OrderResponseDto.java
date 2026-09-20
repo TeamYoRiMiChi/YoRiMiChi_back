@@ -67,6 +67,7 @@ public class OrderResponseDto {
     public static class OrderLineDto {
         private final Long orderItemId;
         private final Long productId;
+        private final String saleType;
         private final String brand;
         private final String productName;
         private final String thumbnailUrl;
@@ -78,6 +79,7 @@ public class OrderResponseDto {
         public OrderLineDto(OrderLine l) {
             this.orderItemId = l.getOrderItemId();
             this.productId = l.getProductId();
+            this.saleType = l.getSaleType();
             this.brand = l.getBrand();
             this.productName = l.getProductName();
             this.thumbnailUrl = l.getThumbnailUrl();

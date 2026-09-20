@@ -27,6 +27,7 @@ public class OrderLine {
     private Long productId;
 
     /* 주문 시점 스냅샷 */
+    private String saleType;
     private String productName;
     private BigDecimal priceJpy;
     private BigDecimal priceKrw;

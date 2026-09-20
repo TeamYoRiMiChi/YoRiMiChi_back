@@ -11,6 +11,7 @@ public class OrderDetailItemResponseDto {
 
     private final Long orderItemId;
     private final Long productId;
+    private final String saleType;
     private final String productName;
     private final BigDecimal priceJpy;
     private final BigDecimal priceKrw;
@@ -20,6 +21,7 @@ public class OrderDetailItemResponseDto {
     public OrderDetailItemResponseDto(OrderItem orderItem) {
         this.orderItemId = orderItem.getOrderItemId();
         this.productId = orderItem.getProductId();
+        this.saleType = orderItem.getSaleType();
         this.productName = orderItem.getProductName();
         this.priceJpy = orderItem.getPriceJpy();
         this.priceKrw = orderItem.getPriceKrw();

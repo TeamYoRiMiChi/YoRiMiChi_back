@@ -89,10 +89,10 @@
             parameterType="com.yorimichi.yorimichi.domain.order.entity.OrderLine"
             useGeneratedKeys="true" keyProperty="orderItemId">
         INSERT INTO ORDER_ITEM (
-            order_id, product_id, product_name,
+            order_id, product_id, sale_type, product_name,
             price_jpy, price_krw, quantity, item_total
         ) VALUES (
-            #{orderId}, #{productId}, #{productName},
+            #{orderId}, #{productId}, #{saleType}, #{productName},
             #{priceJpy}, #{priceKrw}, #{quantity}, #{itemTotal}
         )
     </insert>
@@ -163,6 +163,7 @@
         <id     property="orderItemId"  column="order_item_id"/>
         <result property="orderId"      column="order_id"/>
         <result property="productId"    column="product_id"/>
+        <result property="saleType"     column="sale_type"/>
         <result property="productName"  column="product_name"/>
         <result property="priceJpy"     column="price_jpy"/>
         <result property="priceKrw"     column="price_krw"/>
@@ -177,6 +178,7 @@
             oi.order_item_id,
             oi.order_id,
             oi.product_id,
+            oi.sale_type,
             oi.product_name,
             oi.price_jpy,
             oi.price_krw,

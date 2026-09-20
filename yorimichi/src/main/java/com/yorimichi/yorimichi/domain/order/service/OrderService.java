@@ -196,6 +196,7 @@ public class OrderService {
             orderMapper.insertOrderItem(OrderLine.builder()
                     .orderId(order.getOrderId())
                     .productId(item.getProductId())
+                    .saleType(item.getSaleType())
                     .productName(item.getProductName())
                     .priceJpy(item.getPriceJpy())
                     .priceKrw(item.getPriceKrw())
