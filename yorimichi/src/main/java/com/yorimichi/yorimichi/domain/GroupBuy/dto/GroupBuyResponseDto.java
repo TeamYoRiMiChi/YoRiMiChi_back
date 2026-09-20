@@ -41,6 +41,8 @@ public class GroupBuyResponseDto {
     // 모집 시작 시각과 마감 시각
     private LocalDateTime startDate;
     private LocalDateTime endDate;
+    // DB 현재 시각 기준 남은 초
+    private Long remainingSeconds;
 
     // 모집 상태: RECRUITING, SUCCESS, FAILED, CANCELLED
     private String status;

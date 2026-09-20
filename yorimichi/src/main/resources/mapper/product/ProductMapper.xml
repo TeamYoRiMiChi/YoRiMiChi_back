@@ -251,13 +251,26 @@ END AS status,
         <include refid="groupBuySearchConditions"/>
 
         <choose>
+            <!--
+              인기순: 판매량 + 찜 수 + 장바구니 담김 수 + 리뷰 수
+              사용자의 구매 의도가 강한 찜·리뷰·장바구니에 기존 추천식과 같은 가중치를 둡니다.
+            -->
             <when test="sort == 'popular'">
-                ORDER BY p.sales_count DESC, p.product_id DESC
+                ORDER BY
+                    (
+                        p.sales_count
+                        + (SELECT COUNT(*) FROM WISHLIST w WHERE w.product_id = p.product_id) * 5
+                        + (SELECT COUNT(*) FROM CART_ITEM ci WHERE ci.product_id = p.product_id) * 3
+                        + (SELECT COUNT(*) FROM REVIEW rv WHERE rv.product_id = p.product_id) * 4
+                    ) DESC,
+                    p.product_id DESC
             </when>
 
+            <!-- 최신순: 상품 등록일을 먼저 보고, 같은 경우 최근 수정일로 정렬합니다. -->
             <when test="sort == 'newest'">
                 ORDER BY
-                    COALESCE(gb.created_at, p.created_at) DESC,
+                    p.created_at DESC,
+                    p.updated_at DESC,
                     p.product_id DESC
             </when>
 
@@ -265,8 +278,25 @@ END AS status,
                 ORDER BY p.price_jpy ASC, p.product_id DESC
             </when>
 
+            <!--
+              추천순: 판매량·평점·리뷰·찜·장바구니와 공동구매 모집률을 함께 계산합니다.
+              모집률은 0~1 값에 10을 곱하고, 목표 수량이 0이면 0으로 처리합니다.
+            -->
+            <when test="sort == 'recommend'">
+                ORDER BY
+                    (
+                        p.sales_count
+                        + COALESCE((SELECT AVG(rv.rating) FROM REVIEW rv WHERE rv.product_id = p.product_id), 0) * 2
+                        + (SELECT COUNT(*) FROM REVIEW rc WHERE rc.product_id = p.product_id) * 4
+                        + (SELECT COUNT(*) FROM WISHLIST w WHERE w.product_id = p.product_id) * 5
+                        + (SELECT COUNT(*) FROM CART_ITEM ci WHERE ci.product_id = p.product_id) * 3
+                        + COALESCE(gb.current_quantity / NULLIF(gb.target_quantity, 0), 0) * 10
+                    ) DESC,
+                    p.product_id DESC
+            </when>
+
             <otherwise>
-                ORDER BY p.product_id ASC
+                ORDER BY p.created_at DESC, p.product_id DESC
             </otherwise>
         </choose>
 
