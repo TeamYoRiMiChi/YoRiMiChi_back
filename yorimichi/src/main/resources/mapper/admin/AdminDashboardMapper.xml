@@ -41,7 +41,7 @@
             (
                 SELECT COUNT(*)
                 FROM ORDERS o
-                WHERE o.order_status = 'PENDING'
+                WHERE o.order_status = 'PAID'
             ) AS pending_order_count
     </select>
 

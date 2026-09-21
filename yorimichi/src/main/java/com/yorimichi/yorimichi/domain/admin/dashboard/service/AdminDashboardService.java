@@ -7,9 +7,9 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.LinkedHashMap;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -111,9 +111,9 @@ public class AdminDashboardService {
                 dailySales
         );
     }
-    
+
     public DashboardOrderStatusResponseDto getOrderStatus(Long memberId) {
-    validateAdmin(memberId);
+        validateAdmin(memberId);
 
         LocalDate today = LocalDate.now(KOREA_ZONE);
         LocalDateTime startUtc = toUtcDateTime(today);
@@ -123,15 +123,17 @@ public class AdminDashboardService {
                 adminDashboardMapper.findOrderStatusCounts(startUtc, endUtc);
 
         Map<String, Long> counts = new LinkedHashMap<>();
-        counts.put("PENDING", 0L);
         counts.put("PAID", 0L);
         counts.put("PREPARING", 0L);
         counts.put("SHIPPING", 0L);
         counts.put("DELIVERED", 0L);
         counts.put("CANCELLED", 0L);
+        counts.put("REFUNDED", 0L);
 
         for (OrderStatusCountResponseDto row : queryResults) {
-            counts.merge(row.getStatus(), row.getCount(), Long::sum);
+            if (counts.containsKey(row.getStatus())) {
+                counts.merge(row.getStatus(), row.getCount(), Long::sum);
+            }
         }
 
         List<OrderStatusCountResponseDto> statuses = new ArrayList<>();
@@ -148,10 +150,9 @@ public class AdminDashboardService {
         return new DashboardOrderStatusResponseDto(totalCount, statuses);
     }
 
-
     public List<RecentOrderResponseDto> getRecentOrders(Long memberId) {
-    validateAdmin(memberId);
-    return adminDashboardMapper.findRecentOrders();
+        validateAdmin(memberId);
+        return adminDashboardMapper.findRecentOrders();
     }
 
     private void validateAdmin(Long memberId) {
