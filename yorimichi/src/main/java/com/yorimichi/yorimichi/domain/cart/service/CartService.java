@@ -47,8 +47,13 @@ public class CartService {
         Product product = productMapper.findById(request.getProductId())
                 .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
 
-        if (!"ACTIVE".equals(product.getStatus())
-                && !"GROUP_BUY".equals(product.getStatus())) {
+        /*
+         * PRODUCT.status는 ACTIVE/SOLD_OUT/HIDDEN만 쓰고, GROUP_BUY는 status가 아니라
+         * sale_type 값입니다. status가 'GROUP_BUY'인 경우는 없어서 원래 조건의
+         * 뒤쪽 분기는 항상 참이 되는 죽은 코드였습니다 (동작은 이미 ACTIVE만 통과 —
+         * 공동구매 상품도 모집 중엔 status가 ACTIVE라 문제는 없었지만 헷갈려서 정리).
+         */
+        if (!"ACTIVE".equals(product.getStatus())) {
             throw new CustomException(ErrorCode.PRODUCT_NOT_FOUND);
         }
 
