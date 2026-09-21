@@ -12,19 +12,19 @@ import java.math.RoundingMode;
  */
 public final class OrderCalculator {
 
-    /** 환율 정보가 없을 때 쓰는 기본값 (JPY → KRW) */
+    /** 더 이상 금액 계산에 쓰지 않습니다 (엔화로 통일). 참고용으로만 남겨둡니다. */
     public static final BigDecimal DEFAULT_EXCHANGE_RATE = new BigDecimal("9.5");
 
-    /** 상품 1건당 해외 배송비 */
+    /** 상품 1건당 해외 배송비 (¥) */
     private static final BigDecimal OVERSEAS_SHIPPING_PER_ITEM = new BigDecimal("8000");
 
-    /** 주문 1건당 국내 배송비 */
+    /** 주문 1건당 국내 배송비 (¥) */
     private static final BigDecimal DOMESTIC_SHIPPING = new BigDecimal("3000");
 
-    /** 국내 배송비 무료 기준 */
+    /** 국내 배송비 무료 기준 (¥) */
     private static final BigDecimal FREE_DOMESTIC_THRESHOLD = new BigDecimal("50000");
 
-    /** 관세 면세 한도 (물품가액 기준) */
+    /** 관세 면세 한도 (¥, 물품가액 기준) */
     private static final BigDecimal CUSTOMS_FREE_LIMIT = new BigDecimal("150000");
 
     /** 면세 한도 초과분에 적용할 세율 */
@@ -33,13 +33,21 @@ public final class OrderCalculator {
     private OrderCalculator() {
     }
 
-    /** 엔화 → 원화 (원 단위 반올림) */
+    /**
+     * 주문 금액 산정에 쓸 단가.
+     *
+     * 원래는 엔화 → 원화 환산(priceJpy * rate)이었지만, 상품·장바구니·공동구매 등
+     * 나머지 화면이 전부 엔화(¥) 하나로만 표시하고 있어서 주문/결제만 원화로
+     * 따로 계산되던 것을 엔화로 통일했습니다. rate는 더 이상 금액 계산에 쓰지
+     * 않고, 참고용으로만 남겨둡니다 (파라미터 시그니처는 호출부를 덜 건드리기
+     * 위해 그대로 둡니다).
+     */
     public static BigDecimal toKrw(BigDecimal priceJpy, BigDecimal rate) {
         if (priceJpy == null) return BigDecimal.ZERO;
-        return priceJpy.multiply(rate).setScale(0, RoundingMode.HALF_UP);
+        return priceJpy.setScale(0, RoundingMode.HALF_UP);
     }
 
-    /** 해외 배송비 — 호출부에서 해외직구 상품 유무를 0 또는 1로 전달해 주문당 한 번만 부과 */
+    /** 해외 배송비 — 상품 종류 수만큼 부과 */
     public static BigDecimal overseasShipping(int itemKinds) {
         return OVERSEAS_SHIPPING_PER_ITEM.multiply(BigDecimal.valueOf(itemKinds));
     }
