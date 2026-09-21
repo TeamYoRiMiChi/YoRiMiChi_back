@@ -174,7 +174,7 @@ public class OrderService {
                 .shippingFee(amounts.overseasShipping.add(amounts.domesticShipping))
                 .customsDuty(amounts.customsDuty)
                 .totalAmount(finalTotal)
-                .orderStatus(containsGroupBuy ? "PAID" : "PENDING")
+                .orderStatus("PAID") // 테스트 결제 완료 후 바로 생성되므로 해외직구·공동구매 모두 PAID로 시작합니다.
                 .build();
 
         orderMapper.insertOrder(order);
@@ -215,7 +215,7 @@ public class OrderService {
         orderMapper.insertPayment(
                 order.getOrderId(),
                 request.getPaymentMethod(),
-                containsGroupBuy ? "PAID" : "PENDING",
+                "PAID", // 해외직구·공동구매·혼합 모두 테스트 결제 완료 시점에 PAID로 저장합니다.
                 finalTotal
         );
         orderMapper.insertShipping(order.getOrderId());
