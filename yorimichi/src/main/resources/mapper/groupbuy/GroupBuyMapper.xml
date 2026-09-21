@@ -22,6 +22,7 @@
         <result property="currentQuantity" column="current_quantity"/>
         <result property="startDate" column="start_date"/>
         <result property="endDate" column="end_date"/>
+        <result property="remainingSeconds" column="remaining_seconds"/>
         <result property="status" column="status"/>
     </resultMap>
 
@@ -31,7 +32,15 @@
                p.product_name, p.product_name_jp, p.brand,
                p.price_jpy, p.original_price_jpy, p.thumbnail_url,
                gb.title, gb.description, gb.target_quantity,
-               gb.current_quantity, gb.start_date, gb.end_date, gb.status
+               gb.current_quantity, gb.start_date, gb.end_date,
+               TIMESTAMPDIFF(SECOND, CURRENT_TIMESTAMP, gb.end_date) AS remaining_seconds,
+               CASE
+                   WHEN gb.status IN ('SUCCESS', 'FAILED', 'CANCELLED') THEN gb.status
+                   WHEN gb.current_quantity &gt;= gb.target_quantity THEN 'SUCCESS'
+                   WHEN gb.end_date &lt;= CURRENT_TIMESTAMP THEN 'FAILED'
+                   WHEN gb.end_date &lt;= DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 3 DAY) THEN 'CLOSING_SOON'
+                   ELSE gb.status
+               END AS status
         FROM GROUP_BUY gb
         JOIN PRODUCT p ON p.product_id = gb.product_id
         WHERE gb.product_id = #{productId}
