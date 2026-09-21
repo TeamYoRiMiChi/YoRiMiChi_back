@@ -7,8 +7,9 @@ import java.math.BigDecimal;
 /**
  * 주문서에 표시할 상품 하나
  *
- * 엔화 가격과 원화 환산가를 함께 내려줍니다.
- * 환산은 서버에서 한 번만 계산해 화면마다 값이 어긋나지 않게 합니다.
+ * priceJpy가 실제 판매 단가(엔화)입니다. priceKrw는 예전에 원화로 환산하던
+ * 이름이 남은 것으로, 지금은 별도 환산 없이 priceJpy와 같은 값이 들어갑니다
+ * (엔화로 통일 — OrderCalculator.toKrw 참고).
  */
 @Getter
 public class OrderCheckoutItemDto {

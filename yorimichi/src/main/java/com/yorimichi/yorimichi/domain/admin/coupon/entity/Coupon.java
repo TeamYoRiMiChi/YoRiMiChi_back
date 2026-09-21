@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
  * 쿠폰 정책 (COUPON 테이블)
  *
  * - discountType : FIXED(정액할인), PERCENT(정률할인)
- * - discountValue: FIXED면 원화 정액, PERCENT면 0~100 사이 퍼센트값
+ * - discountValue: FIXED면 엔화 정액, PERCENT면 0~100 사이 퍼센트값
  * - maxDiscountAmount: PERCENT 할인일 때 할인 금액 상한. FIXED면 null
  * - issueType    : ALL(누구나 발급 가능), TARGET(운영툴에서 대상 지정 지급)
  * - usageLimit   : 전체 발급 가능 수량. null이면 무제한
