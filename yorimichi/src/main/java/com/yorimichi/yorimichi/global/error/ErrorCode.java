@@ -48,6 +48,9 @@ public enum ErrorCode {
 	GROUP_BUY_CLOSED(HttpStatus.CONFLICT, "B002", "この共同購入の募集は終了しています。"),
 	ALREADY_PARTICIPATING(HttpStatus.CONFLICT, "B003", "すでにこの共同購入へ申し込んでいます。"),
 	GROUP_BUY_CAPACITY_EXCEEDED(HttpStatus.CONFLICT, "B004", "申し込み可能な数量を超えています。"),
+	NOT_GROUP_BUY_PRODUCT(HttpStatus.BAD_REQUEST, "B005", "共同購入の商品ではありません。"),
+	GROUP_BUY_ALREADY_RECRUITING(HttpStatus.CONFLICT, "B006", "この商品はすでに募集中の共同購入があります。"),
+	GROUP_BUY_HAS_PARTICIPANTS(HttpStatus.CONFLICT, "B007", "参加者がいる共同購入は削除できません。"),
 
 	// Order
 	ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "O001", "存在しない注文です。"),
