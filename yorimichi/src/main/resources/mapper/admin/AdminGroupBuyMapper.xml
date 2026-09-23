@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yorimichi.yorimichi.domain.admin.GroupBuy.repository.AdminGroupBuyMapper">
+
+    <!-- 공동구매 목록 -->
+    <select id="findGroupBuys" resultType="com.yorimichi.yorimichi.domain.admin.GroupBuy.dto.AdminGroupBuyResponseDto">
+        SELECT
+            gb.group_buy_id,
+            gb.product_id,
+            p.product_name,
+            p.product_name_jp,
+            p.brand,
+            p.thumbnail_url,
+            p.price_jpy,
+            gb.title,
+            gb.target_quantity,
+            gb.current_quantity,
+            gb.start_date,
+            gb.end_date,
+            gb.status,
+            gb.created_at,
+            m.name AS creator_name,
+            m.email AS creator_email
+        FROM GROUP_BUY gb
+        JOIN PRODUCT p ON p.product_id = gb.product_id
+        LEFT JOIN MEMBER m ON m.member_id = gb.creator_id
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (
+                    p.product_name LIKE CONCAT('%', #{keyword}, '%')
+                    OR p.product_name_jp LIKE CONCAT('%', #{keyword}, '%')
+                    OR gb.title LIKE CONCAT('%', #{keyword}, '%')
+                )
+            </if>
+            <if test="status != null and status != ''">
+                AND gb.status = #{status}
+            </if>
+            <if test="progress != null and progress == 'UNDER_50'">
+                AND (gb.target_quantity = 0 OR gb.current_quantity * 100 &lt; gb.target_quantity * 50)
+            </if>
+            <if test="progress != null and progress == 'OVER_50'">
+                AND gb.target_quantity &gt; 0
+                AND gb.current_quantity * 100 &gt;= gb.target_quantity * 50
+                AND gb.current_quantity &lt; gb.target_quantity
+            </if>
+            <if test="progress != null and progress == 'COMPLETE'">
+                AND gb.target_quantity &gt; 0
+                AND gb.current_quantity &gt;= gb.target_quantity
+            </if>
+        </where>
+        ORDER BY ${sortColumn} ${sortDirection}, gb.group_buy_id DESC
+        LIMIT #{size}
+        OFFSET #{offset}
+    </select>
+
+    <select id="countGroupBuys" resultType="long">
+        SELECT COUNT(*)
+        FROM GROUP_BUY gb
+        JOIN PRODUCT p ON p.product_id = gb.product_id
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (
+                    p.product_name LIKE CONCAT('%', #{keyword}, '%')
+                    OR p.product_name_jp LIKE CONCAT('%', #{keyword}, '%')
+                    OR gb.title LIKE CONCAT('%', #{keyword}, '%')
+                )
+            </if>
+            <if test="status != null and status != ''">
+                AND gb.status = #{status}
+            </if>
+            <if test="progress != null and progress == 'UNDER_50'">
+                AND (gb.target_quantity = 0 OR gb.current_quantity * 100 &lt; gb.target_quantity * 50)
+            </if>
+            <if test="progress != null and progress == 'OVER_50'">
+                AND gb.target_quantity &gt; 0
+                AND gb.current_quantity * 100 &gt;= gb.target_quantity * 50
+                AND gb.current_quantity &lt; gb.target_quantity
+            </if>
+            <if test="progress != null and progress == 'COMPLETE'">
+                AND gb.target_quantity &gt; 0
+                AND gb.current_quantity &gt;= gb.target_quantity
+            </if>
+        </where>
+    </select>
+
+    <!-- 공동구매 상세 (모집자 정보 + 참여자 수 포함) -->
+    <select id="findGroupBuyDetail" resultType="com.yorimichi.yorimichi.domain.admin.GroupBuy.dto.AdminGroupBuyDetailResponseDto">
+        SELECT
+            gb.group_buy_id,
+            gb.product_id,
+            p.product_name,
+            p.product_name_jp,
+            p.brand,
+            p.thumbnail_url,
+            p.price_jpy,
+            gb.title,
+            gb.description,
+            gb.target_quantity,
+            gb.current_quantity,
+            gb.start_date,
+            gb.end_date,
+            gb.status,
+            gb.created_at,
+            gb.updated_at,
+            m.member_id AS creator_id,
+            m.name AS creator_name,
+            m.email AS creator_email,
+            (
+                SELECT COUNT(*)
+                FROM GROUP_BUY_PARTICIPANT gp
+                WHERE gp.group_buy_id = gb.group_buy_id
+                  AND gp.participation_status = 'JOINED'
+            ) AS participant_count
+        FROM GROUP_BUY gb
+        JOIN PRODUCT p ON p.product_id = gb.product_id
+        LEFT JOIN MEMBER m ON m.member_id = gb.creator_id
+        WHERE gb.group_buy_id = #{groupBuyId}
+    </select>
+
+    <select id="findStatus" resultType="string">
+        SELECT status
+        FROM GROUP_BUY
+        WHERE group_buy_id = #{groupBuyId}
+    </select>
+
+    <select id="findCurrentQuantity" resultType="int">
+        SELECT current_quantity
+        FROM GROUP_BUY
+        WHERE group_buy_id = #{groupBuyId}
+    </select>
+
+    <!-- 모집 정보 수정 -->
+    <update id="updateGroupBuy">
+        UPDATE GROUP_BUY
+        SET
+            title = #{title},
+            description = #{description},
+            target_quantity = #{targetQuantity},
+            start_date = #{startDate},
+            end_date = #{endDate},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE group_buy_id = #{groupBuyId}
+    </update>
+
+    <!-- 상태 강제 변경 -->
+    <update id="updateStatus">
+        UPDATE GROUP_BUY
+        SET
+            status = #{status},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE group_buy_id = #{groupBuyId}
+    </update>
+
+    <!-- 신규 등록: 상품 존재 여부 + 판매유형 확인 -->
+    <select id="findProductSaleType" resultType="string">
+        SELECT sale_type
+        FROM PRODUCT
+        WHERE product_id = #{productId}
+    </select>
+
+    <!-- 신규 등록: 해당 상품에 모집 중인 라운드가 있는지 -->
+    <select id="countRecruitingGroupBuy" resultType="int">
+        SELECT COUNT(*)
+        FROM GROUP_BUY
+        WHERE product_id = #{productId}
+          AND status = 'RECRUITING'
+    </select>
+
+    <!-- 신규 등록: 기존 상품에 새 모집 라운드 생성 -->
+    <insert id="insertGroupBuy">
+        INSERT INTO GROUP_BUY (
+            product_id,
+            creator_id,
+            title,
+            description,
+            target_quantity,
+            current_quantity,
+            start_date,
+            end_date,
+            status,
+            created_at,
+            updated_at
+        ) VALUES (
+            #{productId},
+            #{creatorId},
+            #{title},
+            #{description},
+            #{targetQuantity},
+            0,
+            #{startDate},
+            #{endDate},
+            'RECRUITING',
+            CURRENT_TIMESTAMP,
+            CURRENT_TIMESTAMP
+        )
+    </insert>
+
+    <!-- 삭제: 참여자 기록 -->
+    <delete id="deleteParticipants">
+        DELETE FROM GROUP_BUY_PARTICIPANT
+        WHERE group_buy_id = #{groupBuyId}
+    </delete>
+
+    <!-- 삭제: 공동구매 -->
+    <delete id="deleteGroupBuy">
+        DELETE FROM GROUP_BUY
+        WHERE group_buy_id = #{groupBuyId}
+    </delete>
+
+</mapper>
