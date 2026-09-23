@@ -66,6 +66,9 @@ dependencies {
     // Spring Security Test (for testing security configurations)
     testImplementation 'org.springframework.security:spring-security-test'
 
+	// Validate OAuth 2.0 bearer tokens issued by Cognito
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+
     // JWT 라이브러리
     implementation 'com.auth0:java-jwt:4.6.0'
 
