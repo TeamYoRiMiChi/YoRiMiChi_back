@@ -56,6 +56,8 @@ public enum ErrorCode {
 	ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "O001", "存在しない注文です。"),
 	ADDRESS_NOT_FOUND(HttpStatus.BAD_REQUEST, "O002", "配送先を登録してください。"),
 	CUSTOMS_CODE_REQUIRED(HttpStatus.BAD_REQUEST, "O003", "個人通関固有符号を登録してください。"),
+	ORDER_ALREADY_CANCELLED(HttpStatus.CONFLICT, "O004", "すでにキャンセルされた注文です。"),
+	ORDER_ALREADY_REFUNDED(HttpStatus.CONFLICT, "O005", "すでに返金済みの注文です。"),
 
 	// Coupon
 	COUPON_NOT_FOUND(HttpStatus.NOT_FOUND, "N001", "存在しないクーポンです。"),

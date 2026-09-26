@@ -4,71 +4,206 @@
   "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.yorimichi.yorimichi.domain.mypage.repository.OrderHistoryMapper">
-	<resultMap id="orderHistoryResultMap"
-           type="com.yorimichi.yorimichi.domain.mypage.entity.OrderHistory">
 
-    	<id property="orderId" column="order_id"/>
+    <resultMap id="orderHistoryResultMap"
+        type="com.yorimichi.yorimichi.domain.mypage.dto.OrderHistoryResponseDto">
+        <id property="orderId" column="order_id"/>
 
-    	<result property="orderNumber" column="order_number"/>
-    	<result property="orderType" column="order_type"/>
-    	<result property="totalAmount" column="total_amount"/>
-    	<result property="orderStatus" column="order_status"/>
-    	<result property="orderedAt" column="ordered_at"/>
-	</resultMap>
-	
-	<resultMap id="orderItemResultMap"
-    	type="com.yorimichi.yorimichi.domain.mypage.entity.OrderItem">
+        <result property="orderNumber" column="order_number"/>
+        <result property="orderedAt" column="ordered_at"/>
+        <result property="orderStatus" column="order_status"/>
+        <result property="totalAmount" column="total_amount"/>
+    </resultMap>
 
-    	<id property="orderItemId" column="order_item_id"/>
+    <resultMap id="orderItemResultMap"
+        type="com.yorimichi.yorimichi.domain.mypage.dto.OrderItemResponseDto">
+        <result property="orderId" column="order_id"/>
+        <result property="productName" column="product_name"/>
+        <result property="thumbnailUrl" column="thumbnail_url"/>
+        <result property="priceJpy" column="price_jpy"/>
+        <result property="quantity" column="quantity"/>
+    </resultMap>
 
-    	<result property="orderId" column="order_id"/>
-    	<result property="productId" column="product_id"/>
-    	<result property="saleType" column="sale_type"/>
-    	<result property="productName" column="product_name"/>
-    	<result property="priceJpy" column="price_jpy"/>
-    	<result property="priceKrw" column="price_krw"/>
-    	<result property="quantity" column="quantity"/>
-    	<result property="itemTotal" column="item_total"/>
-    	<result property="createdAt" column="created_at"/>
-    	<result property="updatedAt" column="updated_at"/>
-	</resultMap>
+    <resultMap id="orderDetailResultMap"
+        type="com.yorimichi.yorimichi.domain.mypage.dto.OrderDetailResponseDto">
+        <id property="orderId" column="order_id"/>
 
-    <select id="findOrderHistoriesByMemberId" resultMap="orderHistoryResultMap">
-    	SELECT
-        	order_id,
-        	order_number,
-        	order_type,
-        	total_amount,
-        	order_status,
-        	ordered_at
-    	FROM ORDERS
-    	WHERE member_id = #{memberId}
-    	ORDER BY order_id DESC
-    	LIMIT #{size} OFFSET #{offset}
-	</select>
+        <result property="orderNumber" column="order_number"/>
+        <result property="orderType" column="order_type"/>
+        <result property="orderStatus" column="order_status"/>
+        <result property="orderedAt" column="ordered_at"/>
 
+        <result property="receiverName" column="receiver_name"/>
+        <result property="receiverPhone" column="receiver_phone"/>
+        <result property="postalCode" column="postal_code"/>
+        <result property="address" column="address"/>
+        <result property="addressDetail" column="address_detail"/>
 
-	<select id="findItemsByOrderId" resultMap="orderItemResultMap">
-    	SELECT
-        	order_item_id,
-        	order_id,
-        	product_id,
-        	sale_type,
-        	product_name,
-        	price_jpy,
-        	price_krw,
-        	quantity,
-        	item_total,
-        	created_at,
-        	updated_at
-    	FROM ORDER_ITEM
-    	WHERE order_id = #{orderId}
-    	ORDER BY order_item_id ASC
-	</select>
-	
-	<select id="countOrderHistoriesByMemberId" resultType="long">
-    	SELECT COUNT(*)
-    	FROM ORDERS
-    	WHERE member_id = #{memberId}
-	</select>
+        <result property="productAmount" column="product_amount"/>
+        <result property="shippingFee" column="shipping_fee"/>
+        <result property="customsDuty" column="customs_duty"/>
+        <result property="discountAmount" column="discount_amount"/>
+        <result property="totalAmount" column="total_amount"/>
+
+        <result property="paymentMethod" column="payment_method"/>
+        <result property="paymentStatus" column="payment_status"/>
+        <result property="paidAt" column="paid_at"/>
+        <result property="cancelledAt" column="cancelled_at"/>
+
+        <result property="shippingStatus" column="shipping_status"/>
+        <result property="carrier" column="carrier"/>
+        <result property="trackingNumber" column="tracking_number"/>
+        <result property="shippedAt" column="shipped_at"/>
+        <result property="deliveredAt" column="delivered_at"/>
+    </resultMap>
+
+    <resultMap id="orderDetailItemResultMap"
+        type="com.yorimichi.yorimichi.domain.mypage.dto.OrderDetailItemResponseDto">
+        <id property="orderItemId" column="order_item_id"/>
+
+        <result property="productId" column="product_id"/>
+        <result property="saleType" column="sale_type"/>
+        <result property="productName" column="product_name"/>
+        <result property="thumbnailUrl" column="thumbnail_url"/>
+        <result property="priceJpy" column="price_jpy"/>
+        <result property="quantity" column="quantity"/>
+        <result property="itemTotal" column="item_total"/>
+    </resultMap>
+
+    <select id="findOrderHistoriesByMemberId"
+        resultMap="orderHistoryResultMap">
+        SELECT
+            order_id,
+            order_number,
+            ordered_at,
+            order_status,
+            total_amount
+        FROM ORDERS
+        WHERE member_id = #{memberId}
+        ORDER BY order_id DESC
+        LIMIT #{size}
+        OFFSET #{offset}
+    </select>
+
+    <select id="findItemsByOrderIds"
+        resultMap="orderItemResultMap">
+        SELECT
+            oi.order_id,
+            oi.product_name,
+            p.thumbnail_url,
+            oi.price_jpy,
+            oi.quantity
+        FROM ORDER_ITEM oi
+        LEFT JOIN PRODUCT p
+            ON p.product_id = oi.product_id
+        WHERE oi.order_id IN
+        <foreach
+            collection="orderIds"
+            item="orderId"
+            open="("
+            separator=","
+            close=")">
+            #{orderId}
+        </foreach>
+        ORDER BY oi.order_id, oi.order_item_id
+    </select>
+
+    <select id="countOrderHistoriesByMemberId" resultType="long">
+        SELECT COUNT(*)
+        FROM ORDERS
+        WHERE member_id = #{memberId}
+    </select>
+
+    <select id="findOrderDetailByMemberIdAndOrderId"
+        resultMap="orderDetailResultMap">
+        SELECT
+            o.order_id,
+            o.order_number,
+            o.order_type,
+            o.order_status,
+            o.ordered_at,
+            o.receiver_name,
+            o.receiver_phone,
+            o.postal_code,
+            o.address,
+            o.address_detail,
+            o.product_amount,
+            o.shipping_fee,
+            o.customs_duty,
+            o.discount_amount,
+            o.total_amount,
+            pay.payment_method,
+            pay.payment_status,
+            pay.paid_at,
+            pay.cancelled_at,
+            s.shipping_status,
+            s.carrier,
+            s.tracking_number,
+            s.shipped_at,
+            s.delivered_at
+        FROM ORDERS o
+        LEFT JOIN PAYMENT pay
+            ON pay.order_id = o.order_id
+        LEFT JOIN SHIPPING s
+            ON s.order_id = o.order_id
+        WHERE o.member_id = #{memberId}
+          AND o.order_id = #{orderId}
+    </select>
+
+    <select id="findOrderDetailItemsByOrderId"
+        resultMap="orderDetailItemResultMap">
+        SELECT
+            oi.order_item_id,
+            oi.product_id,
+            oi.sale_type,
+            oi.product_name,
+            p.thumbnail_url,
+            oi.price_jpy,
+            oi.quantity,
+            oi.item_total
+        FROM ORDER_ITEM oi
+        LEFT JOIN PRODUCT p
+            ON p.product_id = oi.product_id
+        WHERE oi.order_id = #{orderId}
+        ORDER BY oi.order_item_id
+    </select>
+
+    <select id="findOrderStatusByMemberIdAndOrderId" resultType="string">
+        SELECT order_status
+        FROM ORDERS
+        WHERE member_id = #{memberId}
+          AND order_id = #{orderId}
+    </select>
+
+    <update id="cancelOrder">
+        UPDATE ORDERS
+        SET order_status = 'CANCELLED'
+        WHERE member_id = #{memberId}
+          AND order_id = #{orderId}
+          AND order_status IN (
+              'PAID',
+              'PREPARING',
+              'SHIPPING',
+              'DELIVERED'
+          )
+    </update>
+
+    <update id="cancelPayment">
+        UPDATE PAYMENT
+        SET payment_status = 'CANCELLED',
+            cancelled_at = NOW()
+        WHERE order_id = #{orderId}
+          AND payment_status = 'PAID'
+    </update>
+
+    <update id="cancelShipping">
+        UPDATE SHIPPING
+        SET shipping_status = 'CANCELLED'
+        WHERE order_id = #{orderId}
+          AND shipping_status IN (
+              'PREPARING',
+              'SHIPPING',
+              'DELIVERED'
+          )
+    </update>
 </mapper>
