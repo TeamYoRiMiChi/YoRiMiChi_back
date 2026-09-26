@@ -22,9 +22,7 @@ spring:
     hibernate:
       ddl-auto: update
 
-  session:
-    jdbc:
-      initialize-schema: always
+
 
   servlet:
     encoding:
