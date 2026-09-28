@@ -1,6 +1,5 @@
 package com.yorimichi.yorimichi.domain.admin.GroupBuy.controller;
 
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -17,6 +16,7 @@ import com.yorimichi.yorimichi.domain.admin.GroupBuy.dto.AdminGroupBuyResponseDt
 import com.yorimichi.yorimichi.domain.admin.GroupBuy.dto.AdminGroupBuyStatusUpdateRequestDto;
 import com.yorimichi.yorimichi.domain.admin.GroupBuy.dto.AdminGroupBuyUpdateRequestDto;
 import com.yorimichi.yorimichi.domain.admin.GroupBuy.service.AdminGroupBuyService;
+import com.yorimichi.yorimichi.global.auth.CurrentMemberId;
 import com.yorimichi.yorimichi.global.response.ApiResponse;
 import com.yorimichi.yorimichi.global.response.PageResponse;
 
@@ -64,7 +64,7 @@ public class AdminGroupBuyController {
     // 신규 등록 (기존 GROUP_BUY 상품에 새 모집 라운드 오픈)
     @PostMapping
     public ApiResponse<Void> createGroupBuy(
-            @AuthenticationPrincipal Long memberId,
+            @CurrentMemberId Long memberId,
             @Valid @RequestBody AdminGroupBuyCreateRequestDto request
     ) {
         adminGroupBuyService.createGroupBuy(memberId, request);

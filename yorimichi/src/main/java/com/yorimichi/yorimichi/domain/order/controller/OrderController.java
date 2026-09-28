@@ -1,28 +1,29 @@
 package com.yorimichi.yorimichi.domain.order.controller;
 
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-
 import com.yorimichi.yorimichi.domain.order.dto.OrderCheckoutResponseDto;
 import com.yorimichi.yorimichi.domain.order.dto.OrderCreateRequestDto;
 import com.yorimichi.yorimichi.domain.order.dto.OrderResponseDto;
 import com.yorimichi.yorimichi.domain.order.service.OrderService;
-import com.yorimichi.yorimichi.global.error.CustomException;
-import com.yorimichi.yorimichi.global.error.ErrorCode;
+import com.yorimichi.yorimichi.global.auth.CurrentMemberId;
 import com.yorimichi.yorimichi.global.response.ApiResponse;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 /**
- * 주문 API (로그인 필요)
+ * 로그인한 회원의 주문을 처리하는 API입니다.
  *
- * GET  /api/orders/checkout   주문서 데이터 (배송지 · 통관부호 · 상품 · 금액)
+ * GET  /api/orders/checkout   주문서에 필요한 배송지, 통관부호, 상품 및 금액 조회
  * POST /api/orders            주문 생성
- * GET  /api/orders/{orderId}  주문 상세
- *
- * memberId는 JwtAuthenticationFilter가 토큰에서 꺼내 넣어줍니다.
+ * GET  /api/orders/{orderId}  주문 상세 조회
  */
 @RestController
 @RequestMapping("/api/orders")
@@ -32,49 +33,70 @@ public class OrderController {
     private final OrderService orderService;
 
     /**
-     * 주문서 화면에 필요한 데이터를 한 번에 내려줍니다
+     * Returns the information needed to render the checkout page.
      *
-     * @param productId 바로구매할 상품. 없으면 장바구니 주문
-     * @param quantity  바로구매 수량 (기본 1)
+     * @param memberId    authenticated member's internal database ID
+     * @param productId   product selected for an immediate purchase
+     * @param quantity    quantity for an immediate purchase
+     * @param saleType    sale type selected by the client
+     * @param cartItemIds cart item IDs included in the order
      */
     @GetMapping("/checkout")
     public ApiResponse<OrderCheckoutResponseDto> getCheckout(
-            @AuthenticationPrincipal Long memberId,
-            @RequestParam(value = "productId", required = false) Long productId,
-            @RequestParam(value = "quantity", required = false, defaultValue = "1") Integer quantity,
-            @RequestParam(value = "saleType", required = false) String saleType,
-            @RequestParam(value = "cartItemIds", required = false) List<Long> cartItemIds) {
-
+            @CurrentMemberId Long memberId,
+            @RequestParam(
+                    value = "productId",
+                    required = false
+            ) Long productId,
+            @RequestParam(
+                    value = "quantity",
+                    required = false,
+                    defaultValue = "1"
+            ) Integer quantity,
+            @RequestParam(
+                    value = "saleType",
+                    required = false
+            ) String saleType,
+            @RequestParam(
+                    value = "cartItemIds",
+                    required = false
+            ) List<Long> cartItemIds
+    ) {
         return ApiResponse.success(
                 orderService.getCheckout(
-                        requireLogin(memberId), productId, quantity, saleType, cartItemIds)
+                        memberId,
+                        productId,
+                        quantity,
+                        saleType,
+                        cartItemIds
+                )
         );
     }
 
+    /**
+     * Creates an order for the authenticated member.
+     */
     @PostMapping
     public ApiResponse<OrderResponseDto> createOrder(
-            @AuthenticationPrincipal Long memberId,
-            @Valid @RequestBody OrderCreateRequestDto request) {
-
+            @CurrentMemberId Long memberId,
+            @Valid @RequestBody OrderCreateRequestDto request
+    ) {
         return ApiResponse.success(
-                orderService.createOrder(requireLogin(memberId), request),
+                orderService.createOrder(memberId, request),
                 "ご注文が完了しました。"
         );
     }
 
+    /**
+     * Returns an order owned by the authenticated member.
+     */
     @GetMapping("/{orderId}")
     public ApiResponse<OrderResponseDto> getOrder(
-            @AuthenticationPrincipal Long memberId,
-            @PathVariable("orderId") Long orderId) {
-
-        return ApiResponse.success(orderService.getOrder(requireLogin(memberId), orderId));
-    }
-
-
-    private Long requireLogin(Long memberId) {
-        if (memberId == null) {
-            throw new CustomException(ErrorCode.UNAUTHORIZED);
-        }
-        return memberId;
+            @CurrentMemberId Long memberId,
+            @PathVariable("orderId") Long orderId
+    ) {
+        return ApiResponse.success(
+                orderService.getOrder(memberId, orderId)
+        );
     }
 }

@@ -2,7 +2,6 @@ package com.yorimichi.yorimichi.domain.admin.dashboard.controller;
 
 import java.util.List;
 
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -12,6 +11,7 @@ import com.yorimichi.yorimichi.domain.admin.dashboard.dto.DashboardOrderStatusRe
 import com.yorimichi.yorimichi.domain.admin.dashboard.dto.DashboardSalesTrendResponseDto;
 import com.yorimichi.yorimichi.domain.admin.dashboard.dto.DashboardSummaryResponseDto;
 import com.yorimichi.yorimichi.domain.admin.dashboard.service.AdminDashboardService;
+import com.yorimichi.yorimichi.global.auth.CurrentMemberId;
 import com.yorimichi.yorimichi.global.response.ApiResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ public class AdminDashboardController {
 
     @GetMapping("/summary")
     public ApiResponse<DashboardSummaryResponseDto> getSummary(
-            @AuthenticationPrincipal Long memberId
+            @CurrentMemberId Long memberId
     ) {
         return ApiResponse.success(
                 adminDashboardService.getSummary(memberId)
@@ -34,7 +34,7 @@ public class AdminDashboardController {
 
     @GetMapping("/sales-trend")
     public ApiResponse<DashboardSalesTrendResponseDto> getSalesTrend(
-            @AuthenticationPrincipal Long memberId
+            @CurrentMemberId Long memberId
     ) {
         return ApiResponse.success(
                 adminDashboardService.getSalesTrend(memberId)
@@ -43,7 +43,7 @@ public class AdminDashboardController {
 
     @GetMapping("/order-status")
     public ApiResponse<DashboardOrderStatusResponseDto> getOrderStatus(
-            @AuthenticationPrincipal Long memberId
+            @CurrentMemberId Long memberId
     ) {
         return ApiResponse.success(
                 adminDashboardService.getOrderStatus(memberId)
@@ -52,7 +52,7 @@ public class AdminDashboardController {
 
     @GetMapping("/recent-orders")
     public ApiResponse<List<RecentOrderResponseDto>> getRecentOrders(
-            @AuthenticationPrincipal Long memberId
+            @CurrentMemberId Long memberId
     ) {
         return ApiResponse.success(
                 adminDashboardService.getRecentOrders(memberId)

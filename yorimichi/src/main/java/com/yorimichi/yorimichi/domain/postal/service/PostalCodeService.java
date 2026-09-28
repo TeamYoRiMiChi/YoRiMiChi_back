@@ -109,7 +109,7 @@ public class PostalCodeService {
 
     private String textOrNull(JsonNode node, String field) {
         JsonNode value = node.path(field);
-        return value.isMissingNode() || value.isNull() ? null : value.asText();
+        return value.isMissingNode() || value.isNull() ? null : value.asString();
     }
 
     private String nullToEmpty(String value) {

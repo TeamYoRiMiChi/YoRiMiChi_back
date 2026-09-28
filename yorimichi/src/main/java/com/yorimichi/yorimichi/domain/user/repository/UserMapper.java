@@ -15,5 +15,7 @@ public interface UserMapper {
 
     Optional<User> findByEmail(String email);
 
+    Optional<User> findByCognitoSub(String cognitoSub);
+
     boolean existsByEmail(String email);
 }

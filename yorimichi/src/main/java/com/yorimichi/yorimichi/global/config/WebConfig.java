@@ -1,7 +1,12 @@
 package com.yorimichi.yorimichi.global.config;
 
+import com.yorimichi.yorimichi.global.auth.CurrentMemberIdArgumentResolver;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import java.util.List;
 
 /**
  * MVC 관련 공통 설정
@@ -14,5 +19,18 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * 인터셉터, 정적 리소스 경로 등이 필요해지면 여기에 추가하세요.
  */
 @Configuration
+@RequiredArgsConstructor
 public class WebConfig implements WebMvcConfigurer {
+
+    private final CurrentMemberIdArgumentResolver currentMemberIdArgumentResolver;
+
+    /**
+     * Registers custom controller argument resolvers.
+     */
+    @Override
+    public void addArgumentResolvers(
+            List<HandlerMethodArgumentResolver> resolvers
+    ) {
+        resolvers.add(currentMemberIdArgumentResolver);
+    }
 }

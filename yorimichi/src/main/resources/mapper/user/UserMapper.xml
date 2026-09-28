@@ -4,8 +4,8 @@
 
     <resultMap id="userResultMap" type="com.yorimichi.yorimichi.domain.user.entity.User">
         <id     property="memberId"            column="member_id"/>
+        <result property="cognitoSub" column="cognito_sub"/>
         <result property="email"               column="email"/>
-        <result property="password"            column="password"/>
         <result property="name"                column="name"/>
         <result property="phone"               column="phone"/>
         <result property="personalCustomsCode" column="personal_customs_code"/>
@@ -17,26 +17,47 @@
     </resultMap>
 
     <sql id="memberColumns">
-        member_id, email, password, name, phone,
+        member_id, cognito_sub, email, name, phone,
         personal_customs_code, role, status,
         withdrawn_at, created_at, updated_at
     </sql>
 
 
     <!-- 회원가입 -->
-    <insert id="save" parameterType="com.yorimichi.yorimichi.domain.user.entity.User"
-            useGeneratedKeys="true" keyProperty="memberId">
-        INSERT INTO MEMBER (email, password, name, phone, role, status)
-        VALUES (#{email}, #{password}, #{name}, #{phone},
-                IFNULL(#{role}, 'USER'), IFNULL(#{status}, 'ACTIVE'))
+    <insert id="save"
+        parameterType="com.yorimichi.yorimichi.domain.user.entity.User"
+        useGeneratedKeys="true"
+        keyProperty="memberId">
+        INSERT INTO MEMBER (
+            cognito_sub,
+            email,
+            name,
+            phone,
+            role,
+            status
+        )
+        VALUES (
+            #{cognitoSub},
+            #{email},
+            #{name},
+            #{phone},
+            IFNULL(#{role}, 'USER'),
+            IFNULL(#{status}, 'ACTIVE')
+        )
     </insert>
-
 
     <!-- ID로 조회 -->
     <select id="findById" resultMap="userResultMap">
         SELECT <include refid="memberColumns"/>
         FROM MEMBER
         WHERE member_id = #{memberId}
+    </select>
+
+    <!-- Find a member by Cognito subject -->
+    <select id="findByCognitoSub" resultMap="userResultMap">
+        SELECT <include refid="memberColumns"/>
+        FROM MEMBER
+        WHERE cognito_sub = #{cognitoSub}
     </select>
 
 

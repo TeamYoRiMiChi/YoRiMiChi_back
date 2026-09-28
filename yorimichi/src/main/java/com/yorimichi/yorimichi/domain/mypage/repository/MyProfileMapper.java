@@ -14,8 +14,7 @@ public interface MyProfileMapper {
 	int updateMyProfile(
 			@Param("memberId") Long memberId,
 			@Param("name") String name,
-			@Param("phone") String phone,
-			@Param("encodedPassword") String encodedPassword
+			@Param("phone") String phone
 	);
 	
 	int withdrawMember(@Param("memberId") Long memberId);

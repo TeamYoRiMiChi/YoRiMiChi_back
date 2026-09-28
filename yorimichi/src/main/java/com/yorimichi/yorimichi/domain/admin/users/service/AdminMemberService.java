@@ -9,6 +9,7 @@ import com.yorimichi.yorimichi.domain.admin.users.dto.AdminMemberResponseDto;
 import com.yorimichi.yorimichi.domain.admin.users.repository.AdminMemberMapper;
 import com.yorimichi.yorimichi.domain.user.entity.User;
 import com.yorimichi.yorimichi.domain.user.repository.UserMapper;
+import com.yorimichi.yorimichi.global.auth.CognitoAccountService;
 import com.yorimichi.yorimichi.global.error.CustomException;
 import com.yorimichi.yorimichi.global.error.ErrorCode;
 
@@ -19,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 public class AdminMemberService {
 	private final UserMapper userMapper;
 	private final AdminMemberMapper adminMemberMapper;
+	private final CognitoAccountService cognitoAccountService;
 	
 	@Transactional(readOnly = true)
 	public List<AdminMemberResponseDto> getMembers(Long adminMemberId) {
@@ -51,9 +53,20 @@ public class AdminMemberService {
 			throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
 		}
 		
-		userMapper.findById(targetMemberId).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+		User target = userMapper.findById(targetMemberId)
+				.orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 		
-		adminMemberMapper.updateMemberStatus(targetMemberId, status);
+		int changedRows = adminMemberMapper.updateMemberStatus(targetMemberId, status);
+		if (changedRows != 1) {
+			throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+		}
+
+		// RDS remains the service status source; Cognito controls whether sign-in is allowed.
+		if ("INACTIVE".equals(status)) {
+			cognitoAccountService.disableUser(target.getEmail());
+		} else {
+			cognitoAccountService.enableUser(target.getEmail());
+		}
 	}
 	@Transactional
 	public void demoteAdminToUser(Long adminMemberId, Long targetMemberId) {
