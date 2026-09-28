@@ -60,7 +60,7 @@ public class OrderHistoryController {
 	@PatchMapping("/{orderId}/cancel")
 	public ApiResponse<Void> cancelOrder(
 			@PathVariable("orderId") long orderId,
-			@AuthenticationPrincipal long memberId
+			@CurrentMemberId long memberId
 			) {
 		orderHistoryService.cancelOrder(orderId, memberId);
 
