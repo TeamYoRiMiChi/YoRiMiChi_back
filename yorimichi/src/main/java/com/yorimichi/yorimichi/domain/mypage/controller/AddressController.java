@@ -1,8 +1,12 @@
 package com.yorimichi.yorimichi.domain.mypage.controller;
 
-import java.util.List;
-
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import com.yorimichi.yorimichi.domain.mypage.dto.AddressRequestDto;
+import com.yorimichi.yorimichi.domain.mypage.dto.AddressResponseDto;
+import com.yorimichi.yorimichi.domain.mypage.service.AddressService;
+import com.yorimichi.yorimichi.global.auth.CurrentMemberId;
+import com.yorimichi.yorimichi.global.response.ApiResponse;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -13,20 +17,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.yorimichi.yorimichi.domain.mypage.dto.AddressRequestDto;
-import com.yorimichi.yorimichi.domain.mypage.dto.AddressResponseDto;
-import com.yorimichi.yorimichi.domain.mypage.service.AddressService;
-import com.yorimichi.yorimichi.global.error.CustomException;
-import com.yorimichi.yorimichi.global.error.ErrorCode;
-import com.yorimichi.yorimichi.global.response.ApiResponse;
-
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
 
 /**
- * 마이페이지 - 배송지 관리 (고객용 CRUD)
+ * 로그인한 회원의 배송지를 관리하는 API입니다.
  *
- * 프론트: src/components/MyPage/AddressManagement/AddressManagement.jsx
+ * GET    /api/addresses                     배송지 목록 조회
+ * POST   /api/addresses                     배송지 추가
+ * PUT    /api/addresses/{addressId}         배송지 수정
+ * PATCH  /api/addresses/{addressId}/default 기본 배송지 설정
+ * DELETE /api/addresses/{addressId}         배송지 삭제
  */
 @RestController
 @RequestMapping("/api/addresses")
@@ -35,74 +35,81 @@ public class AddressController {
 
     private final AddressService addressService;
 
+    /**
+     * Returns every address owned by the authenticated member.
+     */
     @GetMapping
     public ApiResponse<List<AddressResponseDto>> getMyAddresses(
-            @AuthenticationPrincipal Long memberId
+            @CurrentMemberId Long memberId
     ) {
-        if (memberId == null) {
-            throw new CustomException(ErrorCode.UNAUTHORIZED);
-        }
-
-        return ApiResponse.success(addressService.getMyAddresses(memberId));
+        return ApiResponse.success(
+                addressService.getMyAddresses(memberId)
+        );
     }
 
+    /**
+     * Creates an address for the authenticated member.
+     */
     @PostMapping
     public ApiResponse<AddressResponseDto> createAddress(
-            @AuthenticationPrincipal Long memberId,
+            @CurrentMemberId Long memberId,
             @Valid @RequestBody AddressRequestDto request
     ) {
-        if (memberId == null) {
-            throw new CustomException(ErrorCode.UNAUTHORIZED);
-        }
-
         return ApiResponse.success(
                 addressService.createAddress(memberId, request),
                 "配送先を追加しました。"
         );
     }
 
+    /**
+     * Updates an address owned by the authenticated member.
+     */
     @PutMapping("/{addressId}")
     public ApiResponse<AddressResponseDto> updateAddress(
-            @AuthenticationPrincipal Long memberId,
-            @PathVariable Long addressId,
+            @CurrentMemberId Long memberId,
+            @PathVariable("addressId") Long addressId,
             @Valid @RequestBody AddressRequestDto request
     ) {
-        if (memberId == null) {
-            throw new CustomException(ErrorCode.UNAUTHORIZED);
-        }
-
         return ApiResponse.success(
-                addressService.updateAddress(memberId, addressId, request),
+                addressService.updateAddress(
+                        memberId,
+                        addressId,
+                        request
+                ),
                 "配送先を修正しました。"
         );
     }
 
+    /**
+     * Marks an address as the authenticated member's default address.
+     */
     @PatchMapping("/{addressId}/default")
     public ApiResponse<AddressResponseDto> setDefaultAddress(
-            @AuthenticationPrincipal Long memberId,
-            @PathVariable Long addressId
+            @CurrentMemberId Long memberId,
+            @PathVariable("addressId") Long addressId
     ) {
-        if (memberId == null) {
-            throw new CustomException(ErrorCode.UNAUTHORIZED);
-        }
-
         return ApiResponse.success(
-                addressService.setDefaultAddress(memberId, addressId),
+                addressService.setDefaultAddress(
+                        memberId,
+                        addressId
+                ),
                 "基本配送先を変更しました。"
         );
     }
 
+    /**
+     * Deletes an address owned by the authenticated member.
+     */
     @DeleteMapping("/{addressId}")
     public ApiResponse<Void> deleteAddress(
-            @AuthenticationPrincipal Long memberId,
-            @PathVariable Long addressId
+            @CurrentMemberId Long memberId,
+            @PathVariable("addressId") Long addressId
     ) {
-        if (memberId == null) {
-            throw new CustomException(ErrorCode.UNAUTHORIZED);
-        }
-
         addressService.deleteAddress(memberId, addressId);
 
-        return ApiResponse.<Void>success(null, "配送先を削除しました。");
+        return ApiResponse.success(
+                null,
+                "配送先を削除しました。"
+        );
     }
 }

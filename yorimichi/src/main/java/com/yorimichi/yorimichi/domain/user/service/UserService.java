@@ -1,107 +1,47 @@
 package com.yorimichi.yorimichi.domain.user.service;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
-import com.yorimichi.yorimichi.domain.mypage.dto.AddressRequestDto;
-import com.yorimichi.yorimichi.domain.mypage.service.AddressService;
-import com.yorimichi.yorimichi.domain.user.dto.LoginRequestDto;
-import com.yorimichi.yorimichi.domain.user.dto.LoginResponseDto;
+import com.yorimichi.yorimichi.domain.user.dto.CognitoOnboardingRequestDto;
 import com.yorimichi.yorimichi.domain.user.dto.UserResponseDto;
-import com.yorimichi.yorimichi.domain.user.dto.UserSignUpRequestDto;
 import com.yorimichi.yorimichi.domain.user.entity.User;
 import com.yorimichi.yorimichi.domain.user.repository.UserMapper;
 import com.yorimichi.yorimichi.global.error.CustomException;
 import com.yorimichi.yorimichi.global.error.ErrorCode;
-import com.yorimichi.yorimichi.global.jwt.JwtProvider;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
     private final UserMapper userMapper;
-    private final PasswordEncoder passwordEncoder;
-    private final JwtProvider jwtProvider;
-    private final AddressService addressService;
+
+
 
     /**
-     * 회원가입
-     *
-     * 비밀번호는 BCrypt로 해시해서 저장합니다.
-     * 평문은 DB에 절대 남기지 않습니다.
-     */
-    @Transactional
-    public UserResponseDto signup(UserSignUpRequestDto request) {
-
-        if (userMapper.existsByEmail(request.getEmail())) {
-            throw new CustomException(ErrorCode.DUPLICATE_EMAIL);
-        }
-
-        User user = User.builder()
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .name(request.getName())
-                .phone(request.getPhone())
-                .role("USER")
-                .status("ACTIVE")
-                .build();
-
-        userMapper.save(user);
-
-        // 배송지를 같이 입력했으면(우편번호+주소 둘 다) 가입 직후 첫 기본 배송지로 등록합니다
-        if (hasAddress(request)) {
-            AddressRequestDto addressRequest = new AddressRequestDto();
-            addressRequest.setAddressName("自宅");
-            addressRequest.setReceiverName(request.getName().trim());
-            addressRequest.setReceiverPhone(
-                    request.getPhone() != null ? request.getPhone().trim() : "");
-            addressRequest.setPostalCode(request.getPostalCode().trim());
-            addressRequest.setAddress(request.getAddress().trim());
-            addressRequest.setAddressDetail(request.getAddressDetail());
-
-            addressService.createAddress(user.getMemberId(), addressRequest);
-        }
-
-        // save 후 DB가 채운 기본값(createdAt 등)까지 담아서 응답
-        User saved = userMapper.findById(user.getMemberId())
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
-        return new UserResponseDto(saved);
+ * Creates a member record for an authenticated Cognito user.
+ *
+ * cognitoSub and verifiedEmail must come from a verified Cognito identity,
+ * not directly from request body values.
+ */
+@Transactional
+public UserResponseDto onboardCognitoUser(
+        String cognitoSub,
+        String verifiedEmail,
+        CognitoOnboardingRequestDto request
+) {
+    if (!StringUtils.hasText(cognitoSub)
+            || !StringUtils.hasText(verifiedEmail)) {
+        throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
     }
 
-    /** 우편번호·주소를 둘 다 입력했을 때만 배송지로 등록합니다 (상세주소는 없어도 됨) */
-    private boolean hasAddress(UserSignUpRequestDto request) {
-        return request.getPostalCode() != null && !request.getPostalCode().isBlank()
-                && request.getAddress() != null && !request.getAddress().isBlank();
-    }
+    var existingMember = userMapper.findByCognitoSub(cognitoSub);
 
-    /**
-     * 로그인
-     *
-     * 이메일이 없든 비밀번호가 틀리든 같은 예외를 던집니다.
-     * 서로 다른 메시지를 주면 "이 이메일은 가입되어 있다"는 정보가
-     * 공격자에게 노출되기 때문입니다.
-     */
-    @Transactional(readOnly = true)
-    public LoginResponseDto login(LoginRequestDto request) {
+    if (existingMember.isPresent()) {
+        User user = existingMember.get();
 
-        User user = userMapper.findByEmail(request.getEmail())
-                .orElseThrow(() -> new CustomException(ErrorCode.LOGIN_FAILED));
-
-        // 소셜 로그인 전용 계정은 비밀번호가 없음
-        if (user.isSocialOnly()) {
-            throw new CustomException(ErrorCode.SOCIAL_ACCOUNT_ONLY);
-        }
-
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new CustomException(ErrorCode.LOGIN_FAILED);
-        }
-
-        // 탈퇴·정지 회원 차단
         if (!user.isActive()) {
             throw new CustomException(
                     "INACTIVE".equals(user.getStatus())
@@ -110,38 +50,56 @@ public class UserService {
             );
         }
 
-        String accessToken = jwtProvider.createAccessToken(user.getMemberId(), user.getEmail());
-        String refreshToken = jwtProvider.createRefreshToken(user.getMemberId(), user.getEmail());
-
-        log.info("login success - memberId={}", user.getMemberId());
-
-        return new LoginResponseDto(accessToken, refreshToken, new UserResponseDto(user));
+        return new UserResponseDto(user);
     }
 
+    /*
+     * Do not automatically link an existing member by email.
+     * Account linking must be handled through a separate verified flow.
+     */
+    if (userMapper.existsByEmail(verifiedEmail)) {
+        throw new CustomException(ErrorCode.DUPLICATE_EMAIL);
+    }
+
+    String phone = StringUtils.hasText(request.getPhone())
+            ? request.getPhone().trim()
+            : null;
+
+    User user = User.builder()
+            .cognitoSub(cognitoSub)
+            .email(verifiedEmail.trim())
+            .name(request.getName().trim())
+            .phone(phone)
+            .role("USER")
+            .status("ACTIVE")
+            .build();
+
+    userMapper.save(user);
+
+    User saved = userMapper.findById(user.getMemberId())
+            .orElseThrow(() ->
+                    new CustomException(ErrorCode.USER_NOT_FOUND));
+
+    return new UserResponseDto(saved);
+}
     /**
-     * 회원 단건 조회
+     * Returns the member associated with the authenticated Cognito user.
      */
     @Transactional(readOnly = true)
-    public UserResponseDto getUser(Long memberId) {
-        User user = userMapper.findById(memberId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    public UserResponseDto getMyInfo(String cognitoSub) {
+        User user = userMapper.findByCognitoSub(cognitoSub)
+                .orElseThrow(() ->
+                        new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        if (!user.isActive()) {
+            throw new CustomException(
+                    "INACTIVE".equals(user.getStatus())
+                            ? ErrorCode.WITHDRAWN_MEMBER
+                            : ErrorCode.SUSPENDED_MEMBER
+            );
+        }
 
         return new UserResponseDto(user);
     }
 
-    /**
-     * 내 정보 조회 (토큰의 memberId 사용)
-     */
-    @Transactional(readOnly = true)
-    public UserResponseDto getMyInfo(Long memberId) {
-        return getUser(memberId);
-    }
-
-    /**
-     * 이메일 중복 확인
-     */
-    @Transactional(readOnly = true)
-    public boolean isEmailDuplicated(String email) {
-        return userMapper.existsByEmail(email);
-    }
 }

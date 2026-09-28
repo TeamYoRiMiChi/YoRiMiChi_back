@@ -1,8 +1,8 @@
 package com.yorimichi.yorimichi.domain.admin.controller;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import com.yorimichi.yorimichi.domain.admin.dto.AdminProductUpdateRequest;
 import com.yorimichi.yorimichi.domain.admin.service.AdminProductService;
 import com.yorimichi.yorimichi.domain.product.dto.ProductResponseDto;
+import com.yorimichi.yorimichi.global.auth.CurrentMemberId;
 import com.yorimichi.yorimichi.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -47,7 +47,7 @@ public class AdminProductController {
     /**관리자 상품 등록**/
     @PostMapping
     public ApiResponse<ProductResponseDto> createProduct(
-            @AuthenticationPrincipal Long memberId,
+            @CurrentMemberId Long memberId,
             @Valid @RequestBody AdminProductCreateRequest request
     ) {
         return ApiResponse.success(

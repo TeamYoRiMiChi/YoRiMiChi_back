@@ -19,11 +19,7 @@
     	UPDATE MEMBER
     	<set>
     		name = #{name},
-    		phone = #{phone},
-    		
-    		<if test="encodedPassword != null">
-    			password = #{encodedPassword},
-    		</if>
+			phone = #{phone},
     	</set>
     	WHERE member_id = #{memberId}
     </update>

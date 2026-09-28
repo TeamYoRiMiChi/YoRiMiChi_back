@@ -1,6 +1,6 @@
 package com.yorimichi.yorimichi.global.config;
 
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,29 +9,29 @@ import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.yorimichi.yorimichi.global.error.ErrorCode;
-import com.yorimichi.yorimichi.global.jwt.JwtAuthenticationFilter;
+
 
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@RequiredArgsConstructor
 public class SecurityConfig {
-
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     /**
      * 허용할 프론트 주소 패턴 (application.yml의 cors.allowed-origins)
@@ -42,12 +42,10 @@ public class SecurityConfig {
     private List<String> allowedOrigins;
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(
+            HttpSecurity http,
+            JwtAuthenticationConverter jwtAuthenticationConverter
+    ) throws Exception {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
@@ -58,11 +56,10 @@ public class SecurityConfig {
                 // CORS 사전 요청(preflight)은 항상 허용
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
+                // Cognito ADMIN group members only
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
                 // 인증 없이 접근 가능
-                .requestMatchers(HttpMethod.POST, "/api/users").permitAll()          // 회원가입
-                .requestMatchers("/api/users/login").permitAll()                     // 로그인
-                .requestMatchers("/api/users/check-email").permitAll()               // 이메일 중복 확인
-                .requestMatchers("/api/auth/**", "/api/oauth/**").permitAll()        // 소셜 로그인
                 // 상품·카테고리 조회는 비로그인도 가능
                 .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
@@ -77,16 +74,55 @@ public class SecurityConfig {
             )
 
             // 인증·인가 실패 시 로그인 페이지 대신 JSON을 돌려줍니다.
-            .exceptionHandling(ex -> ex
-                .authenticationEntryPoint((req, res, e) ->
-                        writeError(res, ErrorCode.UNAUTHORIZED))
-                .accessDeniedHandler((req, res, e) ->
-                        writeError(res, ErrorCode.UNAUTHORIZED))
-            )
+           .exceptionHandling(ex -> ex
+            .authenticationEntryPoint((req, res, e) ->
+                    writeError(res, ErrorCode.UNAUTHORIZED))
+            .accessDeniedHandler((req, res, e) ->
+                    writeError(res, ErrorCode.ADMIN_ACCESS_DENIED))
+        )
 
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        .oauth2ResourceServer(oauth2 ->
+                oauth2.jwt(jwt ->
+                        jwt.jwtAuthenticationConverter(jwtAuthenticationConverter))
+        );
 
         return http.build();
+    }
+
+    /**
+     * Converts Cognito groups into Spring Security roles.
+     */
+    @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtGrantedAuthoritiesConverter scopeConverter =
+                new JwtGrantedAuthoritiesConverter();
+
+        JwtAuthenticationConverter authenticationConverter =
+                new JwtAuthenticationConverter();
+
+        authenticationConverter.setJwtGrantedAuthoritiesConverter(jwt -> {
+            Collection<GrantedAuthority> authorities = new ArrayList<>();
+            Collection<GrantedAuthority> scopeAuthorities =
+                    scopeConverter.convert(jwt);
+
+            if (scopeAuthorities != null) {
+                authorities.addAll(scopeAuthorities);
+            }
+
+            List<String> groups =
+                    jwt.getClaimAsStringList("cognito:groups");
+
+            if (groups != null) {
+                groups.stream()
+                        .map(group ->
+                                new SimpleGrantedAuthority("ROLE_" + group))
+                        .forEach(authorities::add);
+            }
+
+            return authorities;
+        });
+
+        return authenticationConverter;
     }
 
     /**
