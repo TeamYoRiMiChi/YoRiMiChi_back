@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 - DELETE /api/cart/items/{id}       한 건 삭제
 - DELETE /api/cart/items            전체 비우기
 - 
-- memberId는 JwtAuthenticationFilter가 토큰에서 꺼내 넣어줍니다.
+- memberId는 CurrentMemberIdArgumentResolver가 Cognito JWT의 sub를 통해 조회해 넣어줍니다.
 - 요청 본문으로 받지 않기 때문에 다른 사람의 장바구니를 건드릴 수 없습니다.
 */
 
