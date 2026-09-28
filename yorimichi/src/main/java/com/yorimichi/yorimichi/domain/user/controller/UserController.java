@@ -9,8 +9,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import com.yorimichi.yorimichi.domain.user.dto.CognitoOnboardingRequestDto;
 import com.yorimichi.yorimichi.domain.user.dto.UserResponseDto;
 import com.yorimichi.yorimichi.domain.user.service.UserService;
-import com.yorimichi.yorimichi.global.error.CustomException;
-import com.yorimichi.yorimichi.global.error.ErrorCode;
+import com.yorimichi.yorimichi.global.auth.CognitoAccountService;
 import com.yorimichi.yorimichi.global.response.ApiResponse;
 
 @RestController
@@ -19,6 +18,7 @@ import com.yorimichi.yorimichi.global.response.ApiResponse;
 public class UserController {
 
     private final UserService userService;
+    private final CognitoAccountService cognitoAccountService;
 
     /**
      * Returns the currently authenticated member.
@@ -42,14 +42,10 @@ public class UserController {
             @AuthenticationPrincipal Jwt jwt,
             @Valid @RequestBody CognitoOnboardingRequestDto request
     ) {
-        Boolean emailVerified = jwt.getClaimAsBoolean("email_verified");
-
-        if (!Boolean.TRUE.equals(emailVerified)) {
-            throw new CustomException(ErrorCode.UNAUTHORIZED);
-        }
-
         String cognitoSub = jwt.getSubject();
-        String verifiedEmail = jwt.getClaimAsString("email");
+        String verifiedEmail = cognitoAccountService.getVerifiedEmail(
+                jwt.getClaimAsString("username")
+        );
 
         return ApiResponse.success(
                 userService.onboardCognitoUser(

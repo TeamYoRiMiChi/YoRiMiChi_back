@@ -11,6 +11,11 @@
       "description": "Cognito User Pool ID used for administrative account operations."
     },
     {
+      "name": "cognito.client-id",
+      "type": "java.lang.String",
+      "description": "Cognito application client ID accepted by the resource server."
+    },
+    {
       "name": "cors.allowed-origins",
       "type": "java.util.List<java.lang.String>",
       "description": "Frontend origin patterns allowed to call the backend API."

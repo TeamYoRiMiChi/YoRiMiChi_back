@@ -13,6 +13,12 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimValidator;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtDecoders;
+import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -40,6 +46,12 @@ public class SecurityConfig {
      */
     @Value("${cors.allowed-origins:http://localhost:*,http://127.0.0.1:*,http://192.168.*.*:*,http://10.*.*.*:*}")
     private List<String> allowedOrigins;
+
+    @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
+    private String issuerUri;
+
+    @Value("${cognito.client-id}")
+    private String cognitoClientId;
 
     @Bean
     public SecurityFilterChain filterChain(
@@ -123,6 +135,33 @@ public class SecurityConfig {
         });
 
         return authenticationConverter;
+    }
+
+    /**
+     * Accepts only Access Tokens issued for this Cognito application client.
+     */
+    @Bean
+    public JwtDecoder jwtDecoder() {
+        JwtDecoder decoder = JwtDecoders.fromIssuerLocation(issuerUri);
+
+        var issuerValidator = JwtValidators.createDefaultWithIssuer(issuerUri);
+        var tokenUseValidator = new JwtClaimValidator<String>(
+                "token_use",
+                "access"::equals
+        );
+        var clientIdValidator = new JwtClaimValidator<String>(
+                "client_id",
+                cognitoClientId::equals
+        );
+
+        ((org.springframework.security.oauth2.jwt.NimbusJwtDecoder) decoder)
+                .setJwtValidator(new DelegatingOAuth2TokenValidator<Jwt>(
+                        issuerValidator,
+                        tokenUseValidator,
+                        clientIdValidator
+                ));
+
+        return decoder;
     }
 
     /**
