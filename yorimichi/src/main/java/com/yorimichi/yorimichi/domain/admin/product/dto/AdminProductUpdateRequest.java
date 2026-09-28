@@ -1,4 +1,4 @@
-package com.yorimichi.yorimichi.domain.admin.dto;
+package com.yorimichi.yorimichi.domain.admin.product.dto;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;

@@ -1,7 +1,8 @@
-package com.yorimichi.yorimichi.domain.admin.service;
+package com.yorimichi.yorimichi.domain.admin.product.service;
 
-import com.yorimichi.yorimichi.domain.admin.dto.AdminProductUpdateRequest;
-import com.yorimichi.yorimichi.domain.admin.repository.AdminProductMapper;
+import com.yorimichi.yorimichi.domain.admin.product.dto.AdminProductCreateRequest;
+import com.yorimichi.yorimichi.domain.admin.product.dto.AdminProductUpdateRequest;
+import com.yorimichi.yorimichi.domain.admin.product.repository.AdminProductMapper;
 import com.yorimichi.yorimichi.domain.product.dto.ProductResponseDto;
 import com.yorimichi.yorimichi.domain.product.service.ProductService;
 import lombok.RequiredArgsConstructor;
@@ -10,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Set;
-import com.yorimichi.yorimichi.domain.admin.dto.AdminProductCreateRequest;
+
 import com.yorimichi.yorimichi.domain.product.entity.Product;
 @Service
 @RequiredArgsConstructor

@@ -1,4 +1,4 @@
-package com.yorimichi.yorimichi.domain.admin.dto;
+package com.yorimichi.yorimichi.domain.admin.product.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

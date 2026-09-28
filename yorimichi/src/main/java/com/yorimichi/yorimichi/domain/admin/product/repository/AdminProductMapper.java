@@ -1,7 +1,7 @@
-package com.yorimichi.yorimichi.domain.admin.repository;
+package com.yorimichi.yorimichi.domain.admin.product.repository;
 
-import com.yorimichi.yorimichi.domain.admin.dto.AdminProductCreateRequest;
-import com.yorimichi.yorimichi.domain.admin.dto.AdminProductUpdateRequest;
+import com.yorimichi.yorimichi.domain.admin.product.dto.AdminProductCreateRequest;
+import com.yorimichi.yorimichi.domain.admin.product.dto.AdminProductUpdateRequest;
 import com.yorimichi.yorimichi.domain.product.entity.Product;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;

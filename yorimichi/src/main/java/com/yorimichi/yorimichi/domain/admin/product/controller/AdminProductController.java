@@ -1,6 +1,7 @@
-package com.yorimichi.yorimichi.domain.admin.controller;
-import com.yorimichi.yorimichi.domain.admin.dto.AdminProductUpdateRequest;
-import com.yorimichi.yorimichi.domain.admin.service.AdminProductService;
+package com.yorimichi.yorimichi.domain.admin.product.controller;
+import com.yorimichi.yorimichi.domain.admin.product.dto.AdminProductCreateRequest;
+import com.yorimichi.yorimichi.domain.admin.product.dto.AdminProductUpdateRequest;
+import com.yorimichi.yorimichi.domain.admin.product.service.AdminProductService;
 import com.yorimichi.yorimichi.domain.product.dto.ProductResponseDto;
 import com.yorimichi.yorimichi.global.auth.CurrentMemberId;
 import com.yorimichi.yorimichi.global.response.ApiResponse;
@@ -16,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import com.yorimichi.yorimichi.domain.admin.dto.AdminProductCreateRequest;
+
 import org.springframework.web.bind.annotation.PostMapping;
 /**
  * 관리자 상품관리 API
