@@ -1,0 +1,34 @@
+{
+  "properties": [
+    {
+      "name": "cognito.region",
+      "type": "java.lang.String",
+      "description": "AWS region containing the Cognito User Pool."
+    },
+    {
+      "name": "cognito.user-pool-id",
+      "type": "java.lang.String",
+      "description": "Cognito User Pool ID used for administrative account operations."
+    },
+    {
+      "name": "cors.allowed-origins",
+      "type": "java.util.List<java.lang.String>",
+      "description": "Frontend origin patterns allowed to call the backend API."
+    },
+    {
+      "name": "file.upload.windows",
+      "type": "java.lang.String",
+      "description": "Local upload directory used on Windows."
+    },
+    {
+      "name": "file.upload.linux",
+      "type": "java.lang.String",
+      "description": "Upload directory used on Linux."
+    },
+    {
+      "name": "python.server.url",
+      "type": "java.lang.String",
+      "description": "Base URL of the Python service."
+    }
+  ]
+}
