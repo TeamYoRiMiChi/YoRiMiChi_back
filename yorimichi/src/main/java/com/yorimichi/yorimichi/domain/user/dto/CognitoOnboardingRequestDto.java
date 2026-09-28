@@ -18,8 +18,8 @@ public class CognitoOnboardingRequestDto {
 
     @NotBlank(message = "電話番号を入力してください。")
     @Pattern(
-        regexp = "^\\d{2,3}-\\d{4}-\\d{4}$",
-        message = "電話番号の形式が正しくありません。"
+        regexp = "^(070|080|090)-\\d{4}-\\d{4}$",
+        message = "070・080・090から始まる携帯電話番号を入力してください。"
     )
     private String phone;
 }
