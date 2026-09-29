@@ -76,4 +76,13 @@
         WHERE email = #{email}
     </select>
 
+    <!-- Local-profile admin synchronization. The service guards this call by profile. -->
+    <update id="promoteToAdmin">
+        UPDATE MEMBER
+        SET role = 'ADMIN',
+            updated_at = CURRENT_TIMESTAMP
+        WHERE cognito_sub = #{cognitoSub}
+          AND role != 'ADMIN'
+    </update>
+
 </mapper>

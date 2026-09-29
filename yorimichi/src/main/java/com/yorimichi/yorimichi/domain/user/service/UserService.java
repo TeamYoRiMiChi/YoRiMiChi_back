@@ -18,6 +18,8 @@ public class UserService {
 
     private final UserMapper userMapper;
 
+    private final LocalAdminPolicy localAdminPolicy;
+
 
 
     /**
@@ -30,6 +32,7 @@ public class UserService {
 public UserResponseDto onboardCognitoUser(
         String cognitoSub,
         String verifiedEmail,
+        boolean cognitoAdmin,
         CognitoOnboardingRequestDto request
 ) {
     if (!StringUtils.hasText(cognitoSub)
@@ -50,6 +53,14 @@ public UserResponseDto onboardCognitoUser(
             );
         }
 
+        if ((cognitoAdmin || localAdminPolicy.isAdmin(verifiedEmail))
+                && !"ADMIN".equals(user.getRole())) {
+            userMapper.promoteToAdmin(cognitoSub);
+            user = userMapper.findByCognitoSub(cognitoSub)
+                    .orElseThrow(() ->
+                            new CustomException(ErrorCode.USER_NOT_FOUND));
+        }
+
         return new UserResponseDto(user);
     }
 
@@ -65,12 +76,16 @@ public UserResponseDto onboardCognitoUser(
             ? request.getPhone().trim()
             : null;
 
+    String role = (cognitoAdmin || localAdminPolicy.isAdmin(verifiedEmail))
+            ? "ADMIN"
+            : "USER";
+
     User user = User.builder()
             .cognitoSub(cognitoSub)
             .email(verifiedEmail.trim())
             .name(request.getName().trim())
             .phone(phone)
-            .role("USER")
+            .role(role)
             .status("ACTIVE")
             .build();
 

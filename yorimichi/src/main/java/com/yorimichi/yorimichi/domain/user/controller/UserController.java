@@ -6,6 +6,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.oauth2.jwt.Jwt;
 
+import java.util.List;
+
 import com.yorimichi.yorimichi.domain.user.dto.CognitoOnboardingRequestDto;
 import com.yorimichi.yorimichi.domain.user.dto.UserResponseDto;
 import com.yorimichi.yorimichi.domain.user.service.UserService;
@@ -46,11 +48,14 @@ public class UserController {
         String verifiedEmail = cognitoAccountService.getVerifiedEmail(
                 jwt.getClaimAsString("username")
         );
+        List<String> groups = jwt.getClaimAsStringList("cognito:groups");
+        boolean cognitoAdmin = groups != null && groups.contains("ADMIN");
 
         return ApiResponse.success(
                 userService.onboardCognitoUser(
                         cognitoSub,
                         verifiedEmail,
+                        cognitoAdmin,
                         request
                 ),
                 "会員情報の登録が完了しました。"

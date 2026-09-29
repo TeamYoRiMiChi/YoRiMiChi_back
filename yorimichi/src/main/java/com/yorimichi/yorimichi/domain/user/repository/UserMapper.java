@@ -18,4 +18,6 @@ public interface UserMapper {
     Optional<User> findByCognitoSub(String cognitoSub);
 
     boolean existsByEmail(String email);
+
+    void promoteToAdmin(String cognitoSub);
 }

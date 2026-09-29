@@ -114,6 +114,11 @@ spring:
     username: yorimichi
     password: yorimichi
 
+app:
+  # Comma-separated Cognito emails that receive ADMIN in the local database.
+  # This setting is evaluated only when the local profile is active.
+  local-admin-emails: ${LOCAL_ADMIN_EMAILS:gusals0908@gmail.com}
+
 
 # ============================================
 # RDS — AWS 운영 DB
