@@ -86,7 +86,8 @@ mybatis:
 # 파일 업로드 (local 프로필 전용 디스크 경로. S3 설정은 rds 프로필 섹션 참고)
 file:
   upload:
-    windows: C:\Users\hi02\dev\upload\
+    # 프로젝트 폴더(yorimichi) 기준 상대 경로. STS/이클립스로 실행하면 yorimichi/upload에 저장됩니다.
+    windows: ./upload/
     linux: /app/upload/
 
 # 이미지 저장소 — local 프로필이 /images/**로 직접 서빙할 때 쓰는 주소
