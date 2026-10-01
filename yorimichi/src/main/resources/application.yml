@@ -12,7 +12,7 @@ spring:
           issuer-uri: https://cognito-idp.ap-northeast-2.amazonaws.com/ap-northeast-2_ESj5YRRBK
 
   profiles:
-    active: rds
+    active: ${SPRING_PROFILES_ACTIVE:local}
 
 
 
@@ -78,7 +78,7 @@ cors:
 # MyBatis
 mybatis:
   type-aliases-package: com.yorimichi.yorimichi.domain
-  mapper-locations: classpath:mapper/**/*.xml
+  mapper-locations: classpath:mapper/**/*.xml,classpath:mapper-cognito/**/*.xml
   configuration:
     map-underscore-to-camel-case: true
 
@@ -117,12 +117,15 @@ spring:
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/yorimichi_db?serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8
-    username: yorimichi
-    password: yorimichi
+    url: ${LOCAL_DB_URL:jdbc:mysql://localhost:3306/yorimichi_db?serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8}
+    username: ${LOCAL_DB_USERNAME:yorimichi}
+    password: ${LOCAL_DB_PASSWORD:yorimichi}
+
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml,classpath:mapper-local/**/*.xml
 
 app:
-  # Comma-separated Cognito emails that receive ADMIN in the local database.
+  # Comma-separated emails that receive ADMIN on local signup.
   # This setting is evaluated only when the local profile is active.
   local-admin-emails: ${LOCAL_ADMIN_EMAILS:gusals0908@gmail.com}
 

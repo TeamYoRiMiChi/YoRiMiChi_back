@@ -19,5 +19,6 @@ WORKDIR /app
 COPY --from=build /app/build/libs/*.jar app.jar
 
 EXPOSE 9000
+ENV SPRING_PROFILES_ACTIVE=rds
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

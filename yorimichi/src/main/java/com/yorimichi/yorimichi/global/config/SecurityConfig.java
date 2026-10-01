@@ -67,6 +67,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // CORS 사전 요청(preflight)은 항상 허용
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/auth/config").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/users/login", "/api/users/signup").permitAll()
 
                 // Cognito ADMIN group members only
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
@@ -125,6 +127,7 @@ public class SecurityConfig {
 
             List<String> groups =
                     jwt.getClaimAsStringList("cognito:groups");
+            if (groups == null) groups = jwt.getClaimAsStringList("roles");
 
             if (groups != null) {
                 groups.stream()
@@ -143,6 +146,7 @@ public class SecurityConfig {
      * Accepts only Access Tokens issued for this Cognito application client.
      */
     @Bean
+    @org.springframework.context.annotation.Profile("!local")
     public JwtDecoder jwtDecoder() {
         JwtDecoder decoder = JwtDecoders.fromIssuerLocation(issuerUri);
 

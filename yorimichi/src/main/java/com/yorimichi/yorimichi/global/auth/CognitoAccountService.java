@@ -17,7 +17,16 @@ import software.amazon.awssdk.services.cognitoidentityprovider.model.AttributeTy
 @RequiredArgsConstructor
 public class CognitoAccountService {
 
-    private final CognitoIdentityProviderClient cognitoClient;
+    private final org.springframework.beans.factory.ObjectProvider<CognitoIdentityProviderClient> clients;
+    private final org.springframework.core.env.Environment environment;
+
+    private CognitoIdentityProviderClient client() {
+        return clients.getObject();
+    }
+
+    private boolean isLocal() {
+        return environment.acceptsProfiles(org.springframework.core.env.Profiles.of("local"));
+    }
 
     @Value("${cognito.user-pool-id}")
     private String userPoolId;
@@ -28,7 +37,7 @@ public class CognitoAccountService {
         }
 
         try {
-            var response = cognitoClient.adminGetUser(request -> request
+            var response = client().adminGetUser(request -> request
                     .userPoolId(userPoolId)
                     .username(username));
 
@@ -51,8 +60,9 @@ public class CognitoAccountService {
     }
 
     public void disableUser(String email) {
+        if (isLocal()) return;
         try {
-            cognitoClient.adminDisableUser(request -> request
+            client().adminDisableUser(request -> request
                     .userPoolId(userPoolId)
                     .username(email));
         } catch (SdkException exception) {
@@ -62,8 +72,9 @@ public class CognitoAccountService {
     }
 
     public void enableUser(String email) {
+        if (isLocal()) return;
         try {
-            cognitoClient.adminEnableUser(request -> request
+            client().adminEnableUser(request -> request
                     .userPoolId(userPoolId)
                     .username(email));
         } catch (SdkException exception) {

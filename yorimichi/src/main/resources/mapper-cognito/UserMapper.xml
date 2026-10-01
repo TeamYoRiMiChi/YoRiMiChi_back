@@ -23,7 +23,7 @@
     </sql>
 
 
-    <!-- 회원가입 -->
+    <!-- Cognito 회원가입 -->
     <insert id="save"
         parameterType="com.yorimichi.yorimichi.domain.user.entity.User"
         useGeneratedKeys="true"

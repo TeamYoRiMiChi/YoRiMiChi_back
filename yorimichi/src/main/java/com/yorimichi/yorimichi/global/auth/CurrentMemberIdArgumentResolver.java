@@ -21,6 +21,7 @@ public class CurrentMemberIdArgumentResolver
         implements HandlerMethodArgumentResolver {
 
     private final UserMapper userMapper;
+    private final org.springframework.core.env.Environment environment;
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
@@ -49,13 +50,16 @@ public class CurrentMemberIdArgumentResolver
             throw new CustomException(ErrorCode.UNAUTHORIZED);
         }
 
-        User user = userMapper.findByCognitoSub(jwt.getSubject())
+        boolean local = environment.acceptsProfiles(org.springframework.core.env.Profiles.of("local"));
+        User user = (local
+                ? userMapper.findById(Long.valueOf(jwt.getSubject()))
+                : userMapper.findByCognitoSub(jwt.getSubject()))
                 .orElseThrow(() ->
                         new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (!user.isActive()) {
             throw new CustomException(
-                    "INACTIVE".equals(user.getStatus())
+                    "INACTIVE".equals(user.getStatus()) || "WITHDRAWN".equals(user.getStatus())
                             ? ErrorCode.WITHDRAWN_MEMBER
                             : ErrorCode.SUSPENDED_MEMBER
             );

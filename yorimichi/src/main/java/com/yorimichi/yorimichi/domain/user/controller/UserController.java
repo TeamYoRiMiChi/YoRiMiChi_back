@@ -1,6 +1,7 @@
 package com.yorimichi.yorimichi.domain.user.controller;
 
 import jakarta.validation.Valid;
+import org.springframework.context.annotation.Profile;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +16,7 @@ import com.yorimichi.yorimichi.global.auth.CognitoAccountService;
 import com.yorimichi.yorimichi.global.response.ApiResponse;
 
 @RestController
+@Profile("!local")
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {

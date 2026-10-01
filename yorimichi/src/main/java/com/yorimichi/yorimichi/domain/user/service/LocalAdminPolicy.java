@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Grants a database admin role only while the local Spring profile is active.
- * Cognito group membership is still required by SecurityConfig for admin APIs.
+ * Local tokens use the database role; RDS tokens use Cognito groups.
  */
 @Component
 public class LocalAdminPolicy {

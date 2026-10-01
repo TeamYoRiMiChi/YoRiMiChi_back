@@ -22,6 +22,7 @@ public class User {
     private Long memberId;
     private String cognitoSub;
     private String email;
+    private String password;
     private String name;
     private String phone;
     private String personalCustomsCode;
