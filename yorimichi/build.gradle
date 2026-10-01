@@ -64,9 +64,10 @@ dependencies {
 	// Validate OAuth 2.0 bearer tokens issued by Cognito
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
 
-	// Manage Cognito account status from the backend
+	// Manage Cognito account status from the backend / S3 image storage (rds profile)
 	implementation platform('software.amazon.awssdk:bom:2.55.6')
 	implementation 'software.amazon.awssdk:cognitoidentityprovider'
+	implementation 'software.amazon.awssdk:s3'
 
 	// 핸드폰 인증 라이브러리
 	implementation 'net.nurigo:sdk:4.3.0'

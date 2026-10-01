@@ -1,11 +1,14 @@
 package com.yorimichi.yorimichi.global.config;
 
 import com.yorimichi.yorimichi.global.auth.CurrentMemberIdArgumentResolver;
+import com.yorimichi.yorimichi.global.storage.LocalUploadPathResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -23,6 +26,7 @@ import java.util.List;
 public class WebConfig implements WebMvcConfigurer {
 
     private final CurrentMemberIdArgumentResolver currentMemberIdArgumentResolver;
+    private final LocalUploadPathResolver localUploadPathResolver;
 
     /**
      * Registers custom controller argument resolvers.
@@ -32,5 +36,23 @@ public class WebConfig implements WebMvcConfigurer {
             List<HandlerMethodArgumentResolver> resolvers
     ) {
         resolvers.add(currentMemberIdArgumentResolver);
+    }
+
+    /**
+     * local 프로필에서 저장한 이미지를 /images/** 로 직접 서빙합니다.
+     *
+     * rds 프로필(S3 사용)에서는 이미지가 S3 URL로 바로 내려가므로 이 경로를 쓰지 않습니다.
+     * 매핑 자체는 프로필과 무관하게 항상 등록되지만, rds 환경에서는 해당 디렉터리가
+     * 없을 뿐이라 운영에는 영향이 없습니다.
+     */
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        String basePath = localUploadPathResolver.resolveBasePath();
+        String location = basePath.endsWith(File.separator) || basePath.endsWith("/")
+                ? "file:" + basePath
+                : "file:" + basePath + File.separator;
+
+        registry.addResourceHandler("/images/**")
+                .addResourceLocations(location);
     }
 }
