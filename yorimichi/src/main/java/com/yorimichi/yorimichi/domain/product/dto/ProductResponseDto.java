@@ -3,8 +3,10 @@ package com.yorimichi.yorimichi.domain.product.dto;
 import lombok.Getter;
 
 import com.yorimichi.yorimichi.domain.product.entity.Product;
+import com.yorimichi.yorimichi.global.storage.ImageUrlResolver;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * 상품 응답
@@ -29,9 +31,18 @@ public class ProductResponseDto {
     private final boolean inStock;
     private final Integer salesCount;
     private final String thumbnailUrl;
+    /**
+     * 상품 이미지 전체 (PRODUCT_IMAGE, 썸네일 → image_order 순)
+     * 상세 조회에서만 채우고, 목록에서는 빈 배열입니다.
+     */
+    private final List<String> images;
     private final String status;
 
     public ProductResponseDto(Product p) {
+        this(p, List.of());
+    }
+
+    public ProductResponseDto(Product p, List<String> images) {
         this.productId = p.getProductId();
         this.categoryId = p.getCategoryId();
         this.saleType = p.getSaleType();
@@ -44,7 +55,9 @@ public class ProductResponseDto {
         this.stock = p.getStock();
         this.inStock = p.isInStock();
         this.salesCount = p.getSalesCount();
-        this.thumbnailUrl = p.getThumbnailUrl();
+        // DB에는 URL 또는 저장소 키가 들어있을 수 있어서, 화면용 전체 주소로 바꿔서 내려줍니다
+        this.thumbnailUrl = ImageUrlResolver.resolve(p.getThumbnailUrl());
+        this.images = images;
         this.status = p.getStatus();
     }
 }

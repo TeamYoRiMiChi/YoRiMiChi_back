@@ -1,5 +1,6 @@
 package com.yorimichi.yorimichi.domain.order.dto;
 
+import com.yorimichi.yorimichi.global.storage.ImageUrlResolver;
 import lombok.Getter;
 
 import java.math.BigDecimal;
@@ -42,7 +43,7 @@ public class OrderCheckoutItemDto {
         this.saleType = saleType;
         this.brand = brand;
         this.productName = productName;
-        this.thumbnailUrl = thumbnailUrl;
+        this.thumbnailUrl = ImageUrlResolver.resolve(thumbnailUrl);
         this.priceJpy = priceJpy;
         this.priceKrw = priceKrw;
         this.quantity = quantity;

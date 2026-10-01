@@ -47,7 +47,18 @@
         sales_count,
         weight,
         original_url,
-        thumbnail_url,
+        <!--
+          대표 이미지: PRODUCT_IMAGE에서 is_thumbnail=1 → image_order 순으로 첫 번째,
+          PRODUCT_IMAGE에 등록된 이미지가 없으면 기존 PRODUCT.thumbnail_url을 그대로 씁니다.
+        -->
+        COALESCE(
+            (SELECT pi.image_url
+               FROM PRODUCT_IMAGE pi
+              WHERE pi.product_id = PRODUCT.product_id
+              ORDER BY pi.is_thumbnail DESC, pi.image_order ASC, pi.image_id ASC
+              LIMIT 1),
+            PRODUCT.thumbnail_url
+        ) AS thumbnail_url,
         status,
         created_at,
         updated_at
@@ -223,7 +234,14 @@
             p.sales_count,
             p.weight,
             p.original_url,
-            p.thumbnail_url,
+            COALESCE(
+                (SELECT pi.image_url
+                   FROM PRODUCT_IMAGE pi
+                  WHERE pi.product_id = p.product_id
+                  ORDER BY pi.is_thumbnail DESC, pi.image_order ASC, pi.image_id ASC
+                  LIMIT 1),
+                p.thumbnail_url
+            ) AS thumbnail_url,
             CASE
     WHEN gb.status = 'SUCCESS'
         THEN 'SUCCESS'

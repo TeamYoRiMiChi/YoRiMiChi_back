@@ -3,6 +3,7 @@ package com.yorimichi.yorimichi.domain.cart.dto;
 import lombok.Getter;
 
 import com.yorimichi.yorimichi.domain.cart.entity.CartItem;
+import com.yorimichi.yorimichi.global.storage.ImageUrlResolver;
 
 import java.math.BigDecimal;
 
@@ -39,7 +40,7 @@ public class CartItemResponseDto {
         this.productName = item.getProductName();
         this.priceJpy = item.getPriceJpy();
         this.originalPriceJpy = item.getOriginalPriceJpy();
-        this.thumbnailUrl = item.getThumbnailUrl();
+        this.thumbnailUrl = ImageUrlResolver.resolve(item.getThumbnailUrl());
         this.quantity = item.getQuantity();
         this.subtotal = item.getSubtotal();
         this.stock = item.getStock();

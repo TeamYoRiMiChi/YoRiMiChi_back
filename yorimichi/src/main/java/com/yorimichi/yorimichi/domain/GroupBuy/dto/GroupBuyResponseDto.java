@@ -2,6 +2,9 @@ package com.yorimichi.yorimichi.domain.GroupBuy.dto;
 
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
+import java.util.List;
+
+import com.yorimichi.yorimichi.global.storage.ImageUrlResolver;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -46,4 +49,16 @@ public class GroupBuyResponseDto {
 
     // 모집 상태: RECRUITING, SUCCESS, FAILED, CANCELLED
     private String status;
+
+    // 상품 이미지 전체 (PRODUCT_IMAGE, 썸네일 → image_order 순). 상세 조회에서 서비스가 채웁니다.
+    private List<String> images;
+
+    /** DB 값(URL 또는 저장소 키)을 화면용 전체 주소로 바꿔서 내려줍니다. */
+    public String getThumbnailUrl() {
+        return ImageUrlResolver.resolve(thumbnailUrl);
+    }
+
+    public void setImages(List<String> images) {
+        this.images = images;
+    }
 }

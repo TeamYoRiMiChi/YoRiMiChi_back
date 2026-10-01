@@ -37,6 +37,7 @@ public class ProductService {
     private static final int MAX_PAGE_SIZE = 50;
 
     private final ProductMapper productMapper;
+    private final ProductImageService productImageService;
 
     /**
      * 상품 단건 조회 (판매 방식 무관)
@@ -49,7 +50,7 @@ public class ProductService {
         Product product = productMapper.findById(productId)
                 .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
 
-        return new ProductResponseDto(product);
+        return new ProductResponseDto(product, productImageService.findImageUrls(productId));
     }
 
     /**

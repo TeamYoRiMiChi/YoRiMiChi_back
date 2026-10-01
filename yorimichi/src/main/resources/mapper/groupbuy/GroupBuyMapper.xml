@@ -30,7 +30,15 @@
     <select id="findByProductId" resultMap="groupBuyDetailResultMap">
         SELECT gb.group_buy_id, gb.product_id,
                p.product_name, p.product_name_jp, p.brand,
-               p.price_jpy, p.original_price_jpy, p.thumbnail_url,
+               p.price_jpy, p.original_price_jpy,
+               COALESCE(
+                   (SELECT pi.image_url
+                      FROM PRODUCT_IMAGE pi
+                     WHERE pi.product_id = p.product_id
+                     ORDER BY pi.is_thumbnail DESC, pi.image_order ASC, pi.image_id ASC
+                     LIMIT 1),
+                   p.thumbnail_url
+               ) AS thumbnail_url,
                gb.title, gb.description, gb.target_quantity,
                gb.current_quantity, gb.start_date, gb.end_date,
                TIMESTAMPDIFF(SECOND, CURRENT_TIMESTAMP, gb.end_date) AS remaining_seconds,

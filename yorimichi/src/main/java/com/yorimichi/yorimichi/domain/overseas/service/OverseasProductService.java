@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.yorimichi.yorimichi.domain.product.dto.ProductResponseDto;
 import com.yorimichi.yorimichi.domain.product.entity.Product;
 import com.yorimichi.yorimichi.domain.product.repository.ProductMapper;
+import com.yorimichi.yorimichi.domain.product.service.ProductImageService;
 import com.yorimichi.yorimichi.global.error.CustomException;
 import com.yorimichi.yorimichi.global.error.ErrorCode;
 import com.yorimichi.yorimichi.global.response.PageResponse;
@@ -29,6 +30,7 @@ public class OverseasProductService {
     private static final int MAX_PAGE_SIZE = 50;
 
     private final ProductMapper productMapper;
+    private final ProductImageService productImageService;
 
     /**
      * 해외직구 상품 목록
@@ -75,7 +77,8 @@ public class OverseasProductService {
                 .filter(Product::isOverseas)
                 .orElseThrow(() -> new CustomException(ErrorCode.PRODUCT_NOT_FOUND));
 
-        return new ProductResponseDto(product);
+        // 상세 갤러리용으로 PRODUCT_IMAGE 전체 이미지를 함께 담아 보냅니다
+        return new ProductResponseDto(product, productImageService.findImageUrls(productId));
     }
 
     private String blankToNull(String value) {

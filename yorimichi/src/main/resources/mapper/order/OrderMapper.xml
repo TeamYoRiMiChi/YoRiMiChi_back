@@ -185,7 +185,14 @@
             oi.quantity,
             oi.item_total,
             p.brand,
-            p.thumbnail_url
+            COALESCE(
+                (SELECT pi.image_url
+                   FROM PRODUCT_IMAGE pi
+                  WHERE pi.product_id = oi.product_id
+                  ORDER BY pi.is_thumbnail DESC, pi.image_order ASC, pi.image_id ASC
+                  LIMIT 1),
+                p.thumbnail_url
+            ) AS thumbnail_url
         FROM ORDER_ITEM oi
         LEFT JOIN PRODUCT p ON p.product_id = oi.product_id
         WHERE oi.order_id = #{orderId}

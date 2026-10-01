@@ -10,6 +10,7 @@ import com.yorimichi.yorimichi.domain.GroupBuy.dto.GroupBuyResponseDto;
 import com.yorimichi.yorimichi.domain.GroupBuy.dto.GroupBuyParticipationResponseDto;
 import com.yorimichi.yorimichi.domain.GroupBuy.entity.GroupBuyParticipant;
 import com.yorimichi.yorimichi.domain.GroupBuy.repository.GroupBuyMapper;
+import com.yorimichi.yorimichi.domain.product.service.ProductImageService;
 import com.yorimichi.yorimichi.global.error.CustomException;
 import com.yorimichi.yorimichi.global.error.ErrorCode;
 
@@ -20,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 public class GroupBuyService {
 
     private final GroupBuyMapper groupBuyMapper;
+    private final ProductImageService productImageService;
 
     // 조회만 Controller에서 404로 응답
     @Transactional(readOnly = true)
@@ -29,7 +31,12 @@ public class GroupBuyService {
             throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
-        return groupBuyMapper.findByProductId(productId);
+        // 상세 갤러리용으로 PRODUCT_IMAGE 전체 이미지를 함께 담아 보냅니다
+        return groupBuyMapper.findByProductId(productId)
+                .map(groupBuy -> {
+                    groupBuy.setImages(productImageService.findImageUrls(productId));
+                    return groupBuy;
+                });
     }
 
     @Transactional(readOnly = true)

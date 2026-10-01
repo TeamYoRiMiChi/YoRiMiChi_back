@@ -80,6 +80,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/group-buys/**").permitAll()
                 // 우편번호 검색은 회원가입 화면(비로그인)에서도 씁니다
                 .requestMatchers(HttpMethod.GET, "/api/postal-code/**").permitAll()
+                // local 프로필에서 디스크에 저장한 이미지(WebConfig의 /images/**)는 <img>로 불러오므로 로그인 없이 허용
+                .requestMatchers(HttpMethod.GET, "/images/**").permitAll()
 
                 // 나머지는 로그인 필요
                 .anyRequest().authenticated()

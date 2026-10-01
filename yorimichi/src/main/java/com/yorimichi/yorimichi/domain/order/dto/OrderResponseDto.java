@@ -4,6 +4,7 @@ import lombok.Getter;
 
 import com.yorimichi.yorimichi.domain.order.entity.Order;
 import com.yorimichi.yorimichi.domain.order.entity.OrderLine;
+import com.yorimichi.yorimichi.global.storage.ImageUrlResolver;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -82,7 +83,7 @@ public class OrderResponseDto {
             this.saleType = l.getSaleType();
             this.brand = l.getBrand();
             this.productName = l.getProductName();
-            this.thumbnailUrl = l.getThumbnailUrl();
+            this.thumbnailUrl = ImageUrlResolver.resolve(l.getThumbnailUrl());
             this.priceJpy = l.getPriceJpy();
             this.priceKrw = l.getPriceKrw();
             this.quantity = l.getQuantity();
