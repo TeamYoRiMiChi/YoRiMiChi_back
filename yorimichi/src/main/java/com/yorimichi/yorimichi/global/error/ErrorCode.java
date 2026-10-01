@@ -29,6 +29,9 @@ public enum ErrorCode {
 	// Product
 	PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "P001", "存在しない商品です。"),
 	OUT_OF_STOCK(HttpStatus.CONFLICT, "P002", "在庫が不足しています。"),
+	PRODUCT_IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "P003", "存在しない商品画像です。"),
+	PRODUCT_IMAGE_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "P004", "商品画像は最大10枚まで登録できます。"),
+	INVALID_IMAGE_FILE(HttpStatus.BAD_REQUEST, "P005", "画像ファイル(JPG・PNG・WEBP・GIF)のみアップロードできます。"),
 
 	// Category
 	CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "G001", "存在しないカテゴリです。"),

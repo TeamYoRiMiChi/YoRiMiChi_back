@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yorimichi.yorimichi.domain.admin.product.repository.AdminProductImageMapper">
+
+    <!-- 한 상품의 이미지 전체: 대표 이미지가 맨 앞, 그다음 image_order 순 -->
+    <select id="findByProductId"
+            resultType="com.yorimichi.yorimichi.domain.admin.product.dto.AdminProductImageResponse">
+        SELECT
+            image_id,
+            product_id,
+            image_url,
+            image_order,
+            is_thumbnail AS thumbnail
+        FROM PRODUCT_IMAGE
+        WHERE product_id = #{productId}
+        ORDER BY is_thumbnail DESC, image_order ASC, image_id ASC
+    </select>
+
+    <select id="findRawImageUrl" resultType="string">
+        SELECT image_url
+        FROM PRODUCT_IMAGE
+        WHERE image_id = #{imageId}
+          AND product_id = #{productId}
+    </select>
+
+    <select id="countByProductId" resultType="int">
+        SELECT COUNT(*)
+        FROM PRODUCT_IMAGE
+        WHERE product_id = #{productId}
+    </select>
+
+    <select id="countThumbnail" resultType="int">
+        SELECT COUNT(*)
+        FROM PRODUCT_IMAGE
+        WHERE product_id = #{productId}
+          AND is_thumbnail = 1
+    </select>
+
+    <select id="findMaxOrder" resultType="int">
+        SELECT COALESCE(MAX(image_order), -1)
+        FROM PRODUCT_IMAGE
+        WHERE product_id = #{productId}
+    </select>
+
+    <select id="findFirstImageId" resultType="long">
+        SELECT image_id
+        FROM PRODUCT_IMAGE
+        WHERE product_id = #{productId}
+        ORDER BY image_order ASC, image_id ASC
+        LIMIT 1
+    </select>
+
+    <insert id="insert">
+        INSERT INTO PRODUCT_IMAGE (
+            product_id,
+            image_url,
+            image_order,
+            is_thumbnail
+        ) VALUES (
+            #{productId},
+            #{imageUrl},
+            #{imageOrder},
+            #{thumbnail}
+        )
+    </insert>
+
+    <delete id="delete">
+        DELETE FROM PRODUCT_IMAGE
+        WHERE image_id = #{imageId}
+          AND product_id = #{productId}
+    </delete>
+
+    <!-- 대표 이미지를 바꾸기 전에 기존 대표 표시를 모두 해제 -->
+    <update id="clearThumbnail">
+        UPDATE PRODUCT_IMAGE
+        SET is_thumbnail = 0
+        WHERE product_id = #{productId}
+    </update>
+
+    <update id="setThumbnail">
+        UPDATE PRODUCT_IMAGE
+        SET is_thumbnail = 1
+        WHERE image_id = #{imageId}
+          AND product_id = #{productId}
+    </update>
+
+</mapper>

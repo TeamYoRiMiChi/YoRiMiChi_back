@@ -3,6 +3,8 @@ package com.yorimichi.yorimichi.domain.admin.GroupBuy.dto;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import com.yorimichi.yorimichi.global.storage.ImageUrlResolver;
+
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -40,4 +42,9 @@ public class AdminGroupBuyDetailResponseDto {
 
     /** 참여 취소하지 않은(JOINED) 참여자 수 */
     private Integer participantCount;
+
+    // 저장소 키로 저장돼 있어도 화면에서 바로 쓸 수 있는 URL로 바꿔서 응답합니다.
+    public String getThumbnailUrl() {
+        return ImageUrlResolver.resolve(thumbnailUrl);
+    }
 }

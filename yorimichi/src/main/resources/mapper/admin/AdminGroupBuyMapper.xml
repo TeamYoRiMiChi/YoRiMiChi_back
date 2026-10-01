@@ -13,7 +13,14 @@
             p.product_name,
             p.product_name_jp,
             p.brand,
-            p.thumbnail_url,
+            COALESCE(
+                (SELECT pi.image_url
+                 FROM PRODUCT_IMAGE pi
+                 WHERE pi.product_id = p.product_id
+                 ORDER BY pi.is_thumbnail DESC, pi.image_order ASC, pi.image_id ASC
+                 LIMIT 1),
+                p.thumbnail_url
+            ) AS thumbnail_url,
             p.price_jpy,
             gb.title,
             gb.target_quantity,
@@ -94,7 +101,14 @@
             p.product_name,
             p.product_name_jp,
             p.brand,
-            p.thumbnail_url,
+            COALESCE(
+                (SELECT pi.image_url
+                 FROM PRODUCT_IMAGE pi
+                 WHERE pi.product_id = p.product_id
+                 ORDER BY pi.is_thumbnail DESC, pi.image_order ASC, pi.image_id ASC
+                 LIMIT 1),
+                p.thumbnail_url
+            ) AS thumbnail_url,
             p.price_jpy,
             gb.title,
             gb.description,

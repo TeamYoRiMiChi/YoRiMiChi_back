@@ -20,7 +20,14 @@
             m.phone AS member_phone,
             oi.order_item_id AS first_order_item_id,
             oi.product_name AS first_product_name,
-            p.thumbnail_url AS first_thumbnail_url,
+            COALESCE(
+                (SELECT pi.image_url
+                 FROM PRODUCT_IMAGE pi
+                 WHERE pi.product_id = p.product_id
+                 ORDER BY pi.is_thumbnail DESC, pi.image_order ASC, pi.image_id ASC
+                 LIMIT 1),
+                p.thumbnail_url
+            ) AS first_thumbnail_url,
             oi.quantity AS first_item_quantity,
             (
                 SELECT COUNT(*)
@@ -210,7 +217,14 @@
         	oi.product_id,
         	oi.sale_type,
         	oi.product_name,
-        	p.thumbnail_url,
+        	COALESCE(
+            	(SELECT pi.image_url
+             	FROM PRODUCT_IMAGE pi
+             	WHERE pi.product_id = p.product_id
+             	ORDER BY pi.is_thumbnail DESC, pi.image_order ASC, pi.image_id ASC
+             	LIMIT 1),
+            	p.thumbnail_url
+        	) AS thumbnail_url,
         	oi.price_jpy,
         	oi.quantity,
         	oi.item_total
