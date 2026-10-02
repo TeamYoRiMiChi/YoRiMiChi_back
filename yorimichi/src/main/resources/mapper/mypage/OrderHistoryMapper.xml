@@ -190,15 +190,16 @@
 
     <update id="cancelPayment">
         UPDATE PAYMENT
-        SET payment_status = 'CANCELLED',
-            cancelled_at = NOW()
+        SET payment_status = 'CANCELLED', 
+        	cancelled_at = NOW()
         WHERE order_id = #{orderId}
           AND payment_status = 'PAID'
     </update>
 
     <update id="cancelShipping">
         UPDATE SHIPPING
-        SET shipping_status = 'CANCELLED'
+        SET shipping_status = 'CANCELLED', 
+        	cancelled_at = NOW()
         WHERE order_id = #{orderId}
           AND shipping_status IN (
               'PREPARING',

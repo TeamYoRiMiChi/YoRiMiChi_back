@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yorimichi.yorimichi.domain.mypage.repository.DeliveryTrackingMapper">
+
+	<resultMap id="deliveryTrackingResultMap"
+        type="com.yorimichi.yorimichi.domain.mypage.dto.DeliveryTrackingResponseDto">
+
+        <id property="orderId" column="order_id"/>
+
+        <result property="orderNumber" column="order_number"/>
+        <result property="firstProductName" column="first_product_name"/>
+        <result property="itemCount" column="item_count"/>
+
+        <result property="shippingStatus" column="shipping_status"/>
+        <result property="carrier" column="carrier"/>
+        <result property="trackingNumber" column="tracking_number"/>
+
+        <result property="createdAt" column="created_at"/>
+        <result property="shippedAt" column="shipped_at"/>
+        <result property="deliveredAt" column="delivered_at"/>
+        <result property="cancelledAt" column="cancelled_at"/>
+    </resultMap>
+
+	<select id="findDeliveryTrackingsByMemberId"
+        resultMap="deliveryTrackingResultMap">
+
+        SELECT
+            o.order_id,
+            o.order_number,
+            first_item.product_name AS first_product_name,
+            item_summary.item_count,
+            s.shipping_status,
+            s.carrier,
+            s.tracking_number,
+            s.created_at,
+            s.shipped_at,
+            s.delivered_at,
+            s.cancelled_at
+        FROM ORDERS o
+        JOIN SHIPPING s
+            ON s.order_id = o.order_id
+        LEFT JOIN (
+            SELECT
+                order_id,
+                MIN(order_item_id) AS first_order_item_id,
+                COUNT(*) AS item_count
+            FROM ORDER_ITEM
+            GROUP BY order_id
+        ) item_summary
+            ON item_summary.order_id = o.order_id
+        LEFT JOIN ORDER_ITEM first_item
+            ON first_item.order_item_id = item_summary.first_order_item_id
+        WHERE o.member_id = #{memberId}
+        ORDER BY o.order_id DESC
+        LIMIT #{size}
+        OFFSET #{offset}
+    </select>
+    
+    <select id="countDeliveryTrackingsByMemberId"
+        resultType="long">
+
+        SELECT COUNT(*)
+        FROM ORDERS o
+        JOIN SHIPPING s
+            ON s.order_id = o.order_id
+        WHERE o.member_id = #{memberId}
+    </select>
+</mapper>
