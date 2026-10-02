@@ -63,6 +63,11 @@ public enum ErrorCode {
 	ORDER_ALREADY_CANCELLED(HttpStatus.CONFLICT, "O004", "すでにキャンセルされた注文です。"),
 	ORDER_ALREADY_REFUNDED(HttpStatus.CONFLICT, "O005", "すでに返金済みの注文です。"),
 
+	// Review
+	REVIEW_ORDER_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "R001", "レビューを書ける注文商品が見つかりません。"),
+	REVIEW_ALREADY_EXISTS(HttpStatus.CONFLICT, "R002", "この商品のレビューはすでに投稿されています。"),
+	REVIEW_NOT_ALLOWED(HttpStatus.CONFLICT, "R003", "キャンセルされた注文にはレビューを投稿できません。"),
+
 	// Coupon
 	COUPON_NOT_FOUND(HttpStatus.NOT_FOUND, "N001", "存在しないクーポンです。"),
 	DUPLICATE_COUPON_CODE(HttpStatus.CONFLICT, "N002", "既に使用されているクーポンコードです。"),
