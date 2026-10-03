@@ -5,6 +5,16 @@
 
 <mapper namespace="com.yorimichi.yorimichi.domain.admin.product.repository.AdminProductImageMapper">
 
+    <select id="lockProduct" resultType="long">
+        SELECT product_id FROM PRODUCT
+        WHERE product_id = #{productId} AND is_deleted = 0
+        FOR UPDATE
+    </select>
+
+    <select id="countByImageKey" resultType="int">
+        SELECT COUNT(*) FROM PRODUCT_IMAGE WHERE image_url = #{imageKey}
+    </select>
+
     <!-- 한 상품의 이미지 전체: 대표 이미지가 맨 앞, 그다음 image_order 순 -->
     <select id="findByProductId"
             resultType="com.yorimichi.yorimichi.domain.admin.product.dto.AdminProductImageResponse">

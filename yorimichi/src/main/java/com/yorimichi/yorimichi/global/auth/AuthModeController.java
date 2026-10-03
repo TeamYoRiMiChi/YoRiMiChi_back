@@ -15,8 +15,9 @@ public class AuthModeController {
     @GetMapping("/api/auth/config")
     public ApiResponse<Mode> config() {
         return ApiResponse.success(new Mode(
-                environment.acceptsProfiles(Profiles.of("local")) ? "local" : "cognito"));
+                environment.acceptsProfiles(Profiles.of("local")) ? "local" : "cognito",
+                environment.acceptsProfiles(Profiles.of("rds")) ? "s3" : "multipart"));
     }
 
-    public record Mode(String mode) {}
+    public record Mode(String mode, String imageUploadMode) {}
 }

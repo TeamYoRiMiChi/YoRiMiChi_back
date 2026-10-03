@@ -60,7 +60,7 @@ public class AdminProductImageService {
      */
     @Transactional
     public List<AdminProductImageResponse> addImages(Long productId, List<MultipartFile> files) {
-        requireProduct(productId);
+        lockProduct(productId);
 
         List<MultipartFile> uploads = files == null
                 ? List.of()
@@ -111,7 +111,7 @@ public class AdminProductImageService {
      */
     @Transactional
     public List<AdminProductImageResponse> deleteImage(Long productId, Long imageId) {
-        requireProduct(productId);
+        lockProduct(productId);
 
         String rawUrl = imageMapper.findRawImageUrl(imageId, productId);
         if (rawUrl == null) {
@@ -138,7 +138,7 @@ public class AdminProductImageService {
     /** 대표 이미지 변경 */
     @Transactional
     public List<AdminProductImageResponse> changeThumbnail(Long productId, Long imageId) {
-        requireProduct(productId);
+        lockProduct(productId);
 
         if (imageMapper.findRawImageUrl(imageId, productId) == null) {
             throw new CustomException(ErrorCode.PRODUCT_IMAGE_NOT_FOUND);
@@ -152,6 +152,12 @@ public class AdminProductImageService {
 
     private void requireProduct(Long productId) {
         if (productMapper.countProductById(productId) == 0) {
+            throw new CustomException(ErrorCode.PRODUCT_NOT_FOUND);
+        }
+    }
+
+    private void lockProduct(Long productId) {
+        if (imageMapper.lockProduct(productId) == null) {
             throw new CustomException(ErrorCode.PRODUCT_NOT_FOUND);
         }
     }

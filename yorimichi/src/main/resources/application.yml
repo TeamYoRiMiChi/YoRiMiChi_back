@@ -179,9 +179,6 @@ mybatis:
 app:
   image:
     s3:
-      bucket: test
-      # bucket: ${S3_IMAGE_BUCKET}
+      bucket: ${S3_IMAGE_BUCKET}
       region: ${AWS_REGION:ap-northeast-2}
-      # CloudFront 등 커스텀 도메인을 쓰면 여기에 넣고, 아니면 비워두세요
-      # (비워두면 https://{bucket}.s3.{region}.amazonaws.com 형태로 자동 조립됩니다).
       public-base-url: ${S3_IMAGE_PUBLIC_BASE_URL:}

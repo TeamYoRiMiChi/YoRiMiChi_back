@@ -14,6 +14,11 @@ import java.util.List;
 @Mapper
 public interface AdminProductImageMapper {
 
+    /** 이미지 변경 중 같은 상품에 대한 요청을 직렬화합니다. */
+    Long lockProduct(@Param("productId") Long productId);
+
+    int countByImageKey(@Param("imageKey") String imageKey);
+
     /** 한 상품의 이미지 전체 (대표 이미지 → image_order 순) */
     List<AdminProductImageResponse> findByProductId(@Param("productId") Long productId);
 
