@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yorimichi.yorimichi.domain.mypage.repository.MyReviewMapper">
+
+    <resultMap id="myReviewResultMap"
+        type="com.yorimichi.yorimichi.domain.mypage.dto.MyReviewResponseDto">
+        <id property="reviewId" column="review_id"/>
+
+        <result property="productName" column="product_name"/>
+        <result property="thumbnailUrl" column="thumbnail_url"/>
+        <result property="rating" column="rating"/>
+        <result property="content" column="content"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <select id="findMyReviewsByMemberId" resultMap="myReviewResultMap">
+        SELECT
+            r.review_id,
+            oi.product_name,
+            p.thumbnail_url,
+            r.rating,
+            r.content,
+            r.created_at
+        FROM REVIEW r
+        JOIN ORDER_ITEM oi
+            ON oi.order_item_id = r.order_item_id
+        LEFT JOIN PRODUCT p
+            ON p.product_id = r.product_id
+        WHERE r.member_id = #{memberId}
+        ORDER BY r.created_at DESC, r.review_id DESC
+        LIMIT #{size}
+        OFFSET #{offset}
+    </select>
+
+    <select id="countMyReviewsByMemberId" resultType="long">
+        SELECT COUNT(*)
+        FROM REVIEW
+        WHERE member_id = #{memberId}
+    </select>
+
+    <update id="updateMyReview">
+        UPDATE REVIEW
+        SET
+            rating = #{rating},
+            content = #{content}
+        WHERE review_id = #{reviewId}
+          AND member_id = #{memberId}
+    </update>
+
+    <delete id="deleteMyReview">
+        DELETE FROM REVIEW
+        WHERE review_id = #{reviewId}
+          AND member_id = #{memberId}
+    </delete>
+
+</mapper>
