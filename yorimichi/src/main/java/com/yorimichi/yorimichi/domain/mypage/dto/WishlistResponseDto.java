@@ -3,6 +3,7 @@ package com.yorimichi.yorimichi.domain.mypage.dto;
 import java.math.BigDecimal;
 
 import com.yorimichi.yorimichi.domain.mypage.entity.Wishlist;
+import com.yorimichi.yorimichi.global.storage.ImageUrlResolver;
 
 import lombok.Getter;
 
@@ -24,6 +25,6 @@ public class WishlistResponseDto {
         this.name = wishlist.getName();
         this.price = wishlist.getPrice();
         this.soldOut = wishlist.getSoldOut();
-        this.thumbnailUrl = wishlist.getThumbnailUrl();
+        this.thumbnailUrl = ImageUrlResolver.resolve(wishlist.getThumbnailUrl());
     }
 }

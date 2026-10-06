@@ -77,6 +77,7 @@ class S3ProductImageServiceTest {
         when(mapper.lockProduct(7L)).thenReturn(7L);
         when(mapper.countByImageKey("same.gif")).thenReturn(1);
         assertError(() -> service.registerImages(15L, 7L, List.of("same.gif")), ErrorCode.INVALID_INPUT_VALUE);
+        verifyNoInteractions(uploads);
         verify(mapper, never()).insert(anyLong(), anyString(), anyInt(), anyBoolean());
     }
 

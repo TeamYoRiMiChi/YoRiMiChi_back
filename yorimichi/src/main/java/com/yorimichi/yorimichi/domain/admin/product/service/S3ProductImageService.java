@@ -49,10 +49,10 @@ public class S3ProductImageService {
 
         // 전체 키를 확인한 뒤 저장하여, 검증 실패 시 부분 등록을 막습니다.
         for (String imageKey : imageKeys) {
-            s3UploadService.validateUploadedImage(memberId, imageKey);
             if (imageMapper.countByImageKey(imageKey) > 0) {
                 throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
             }
+            s3UploadService.validateUploadedImage(memberId, imageKey);
         }
 
         boolean needThumbnail = imageMapper.countThumbnail(productId) == 0;

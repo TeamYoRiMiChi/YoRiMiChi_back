@@ -12,6 +12,12 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.core.ResponseInputStream;
+import java.io.ByteArrayInputStream;
+import java.util.Base64;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -63,9 +69,45 @@ class S3UploadServiceTest {
 
     @Test
     void acceptsUploadedGif() {
+        byte[] gif = Base64.getDecoder().decode("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7");
         when(s3Client.headObject(any(HeadObjectRequest.class)))
-                .thenReturn(HeadObjectResponse.builder().contentType("image/gif").contentLength(42L).build());
+                .thenReturn(HeadObjectResponse.builder().contentType("image/gif").contentLength((long) gif.length)
+                        .eTag("etag").build());
+        when(s3Client.getObject(any(GetObjectRequest.class))).thenReturn(new ResponseInputStream<>(
+                GetObjectResponse.builder().build(), new ByteArrayInputStream(gif)));
         assertThatCode(() -> service.validateUploadedImage(15L, KEY)).doesNotThrowAnyException();
+        verify(s3Client, never()).deleteObject(any(DeleteObjectRequest.class));
+        verify(s3Client).getObject(argThat((GetObjectRequest request) -> "etag".equals(request.ifMatch())));
+    }
+
+    @Test
+    void rejectsOversizedObjectWithoutDownloadingAndDeletesIt() {
+        when(s3Client.headObject(any(HeadObjectRequest.class))).thenReturn(HeadObjectResponse.builder()
+                .contentType("image/gif").contentLength(10 * 1024 * 1024 + 1L).build());
+        assertError(() -> service.validateUploadedImage(15L, KEY), ErrorCode.INVALID_IMAGE_FILE);
+        verify(s3Client, never()).getObject(any(GetObjectRequest.class));
+        verify(s3Client).deleteObject(any(DeleteObjectRequest.class));
+    }
+
+    @Test
+    void rejectsAndDeletesTextDisguisedAsGif() {
+        byte[] text = "not an image".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        when(s3Client.headObject(any(HeadObjectRequest.class))).thenReturn(HeadObjectResponse.builder()
+                .contentType("image/gif").contentLength((long) text.length).build());
+        when(s3Client.getObject(any(GetObjectRequest.class))).thenReturn(new ResponseInputStream<>(
+                GetObjectResponse.builder().build(), new ByteArrayInputStream(text)));
+        assertError(() -> service.validateUploadedImage(15L, KEY), ErrorCode.INVALID_IMAGE_FILE);
+        verify(s3Client).deleteObject(any(DeleteObjectRequest.class));
+    }
+
+    @Test
+    void doesNotDeleteImageWhenS3ReadFails() {
+        when(s3Client.headObject(any(HeadObjectRequest.class))).thenReturn(HeadObjectResponse.builder()
+                .contentType("image/gif").contentLength(42L).build());
+        when(s3Client.getObject(any(GetObjectRequest.class)))
+                .thenThrow(software.amazon.awssdk.services.s3.model.S3Exception.builder().statusCode(503).build());
+        assertError(() -> service.validateUploadedImage(15L, KEY), ErrorCode.INTERNAL_SERVER_ERROR);
+        verify(s3Client, never()).deleteObject(any(DeleteObjectRequest.class));
     }
 
     @Test

@@ -182,3 +182,4 @@ app:
       bucket: ${S3_IMAGE_BUCKET}
       region: ${AWS_REGION:ap-northeast-2}
       public-base-url: ${S3_IMAGE_PUBLIC_BASE_URL:}
+    max-file-size-bytes: ${IMAGE_MAX_FILE_SIZE_BYTES:10485760}
