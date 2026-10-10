@@ -20,7 +20,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/myreviews")
+@RequestMapping("/api/my-reviews")
 @RequiredArgsConstructor
 public class MyReviewController {
 

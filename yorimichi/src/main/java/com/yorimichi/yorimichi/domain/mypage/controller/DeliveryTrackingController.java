@@ -14,7 +14,7 @@ import com.yorimichi.yorimichi.global.response.PageResponse;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("api/deliverytracking")
+@RequestMapping("/api/delivery-tracking")
 @RequiredArgsConstructor
 public class DeliveryTrackingController {
 

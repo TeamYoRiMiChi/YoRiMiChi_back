@@ -62,7 +62,7 @@ class LocalAuthenticationIntegrationTest {
         var me = request("GET", "/api/users/me", null, token);
         assertThat(me.statusCode()).isEqualTo(200);
         assertThat(me.body()).contains("local@example.com").doesNotContain("password", hash);
-        assertThat(request("GET", "/api/myprofile", null, token).statusCode()).isEqualTo(200);
+        assertThat(request("GET", "/api/my-profile", null, token).statusCode()).isEqualTo(200);
         assertThat(request("GET", "/api/users/me", null, token + "invalid").statusCode()).isEqualTo(401);
         assertThat(request("GET", "/api/admin/users", null, token).statusCode()).isEqualTo(403);
         jdbc.update("UPDATE MEMBER SET status='INACTIVE' WHERE email='local@example.com'");

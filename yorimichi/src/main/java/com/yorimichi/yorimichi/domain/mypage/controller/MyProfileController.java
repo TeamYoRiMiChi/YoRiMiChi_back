@@ -18,12 +18,12 @@ import lombok.RequiredArgsConstructor;
 /**
  * 로그인한 회원의 프로필을 관리하는 API입니다.
  *
- * GET   /api/myprofile            프로필 조회
- * PATCH /api/myprofile            이름 및 전화번호 수정
- * PATCH /api/myprofile/withdrawal 회원 탈퇴
+ * GET   /api/my-profile            프로필 조회
+ * PATCH /api/my-profile            이름 및 전화번호 수정
+ * PATCH /api/my-profile/withdrawal 회원 탈퇴
  */
 @RestController
-@RequestMapping("/api/myprofile")
+@RequestMapping("/api/my-profile")
 @RequiredArgsConstructor
 public class MyProfileController {
 

@@ -20,11 +20,11 @@ import lombok.RequiredArgsConstructor;
 /**
  * 마이페이지 주문 내역을 조회하는 API입니다.
  *
- * GET /api/orderhistory           주문 내역 조회
- * GET /api/orderhistory/{orderId} 주문 상세 조회
+ * GET /api/order-history           주문 내역 조회
+ * GET /api/order-history/{orderId} 주문 상세 조회
  */
 @RestController
-@RequestMapping("/api/orderhistory")
+@RequestMapping("/api/order-history")
 @RequiredArgsConstructor
 public class OrderHistoryController {
 	private final OrderHistoryService orderHistoryService;
