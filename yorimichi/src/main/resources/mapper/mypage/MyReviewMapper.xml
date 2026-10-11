@@ -20,7 +20,19 @@
         SELECT
             r.review_id,
             oi.product_name,
-            p.thumbnail_url,
+			COALESCE(
+    			(
+        			SELECT pi.image_url
+        			FROM PRODUCT_IMAGE pi
+        			WHERE pi.product_id = p.product_id
+        			ORDER BY
+            			pi.is_thumbnail DESC,
+            			pi.image_order ASC,
+            			pi.image_id ASC
+        			LIMIT 1
+    			),
+    			p.thumbnail_url
+			) AS thumbnail_url,
             r.rating,
             r.content,
             r.created_at

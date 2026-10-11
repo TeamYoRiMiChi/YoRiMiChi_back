@@ -2,6 +2,8 @@ package com.yorimichi.yorimichi.domain.mypage.dto;
 
 import java.math.BigDecimal;
 
+import com.yorimichi.yorimichi.global.storage.ImageUrlResolver;
+
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -19,4 +21,8 @@ public class OrderDetailItemResponseDto {
     private BigDecimal priceJpy;
     private Integer quantity;
     private BigDecimal itemTotal;
+    
+    public String getThumbnailUrl() {
+        return ImageUrlResolver.resolve(thumbnailUrl);
+    }
 }
